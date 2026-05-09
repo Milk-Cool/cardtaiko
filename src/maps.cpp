@@ -2,7 +2,7 @@
 #include <SDFS.h>
 
 bool maps_init() {
-    SDFS.setConfig(SDFSConfig(5, SPI_QUARTER_SPEED, SPI1));
+    SDFS.setConfig(SDFSConfig(5, SPI_EIGHTH_SPEED, SPI1));
     bool ret = SDFS.begin();
     if(ret) {
         if(!SDFS.exists("/taiko")) SDFS.mkdir("/taiko");
@@ -20,6 +20,7 @@ std::vector<String> maps_list() {
             out.push_back(map.fullName());
         map.close();
     }
+    maps.close();
     return out;
 }
 std::vector<String> difficulty_list(String path) {
@@ -32,6 +33,7 @@ std::vector<String> difficulty_list(String path) {
             out.push_back(map.fullName());
         map.close();
     }
+    maps.close();
     return out;
 }
 Level load_level(String path) {
