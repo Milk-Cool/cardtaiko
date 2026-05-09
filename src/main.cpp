@@ -1,7 +1,15 @@
 #include <Arduino.h>
 #include <LovyanGFX.hpp>
 #include <SPI.h>
+#include "lvcfg.h"
+#include <lvgl.h>
 #include "maps.h"
+
+#define W 320
+#define H 170
+
+static lv_disp_draw_buf_t draw_buf;
+static lv_color_t buf[2][W * 10]; // what.
 
 void etft() {
     digitalWrite(13, LOW);
@@ -37,8 +45,8 @@ public:
             cfg.pin_cs = 13;
             cfg.pin_rst = 29;
             cfg.pin_busy = -1;
-            cfg.panel_width = 170;
-            cfg.panel_height = 320;
+            cfg.panel_width = H; // swapped bc display is rotated
+            cfg.panel_height = W;
             cfg.offset_x = 34;
             cfg.offset_y = 0;
             cfg.offset_rotation = 0;
@@ -58,6 +66,16 @@ public:
 
 LGFX tft = LGFX();
 
+// https://github.com/lovyan03/LovyanGFX/blob/master/examples/Advanced/LVGL_PlatformIO/src/main.cpp#L17
+void flush_gfx(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
+    if(tft.getStartCount() == 0)
+        tft.startWrite();
+    // hah. screw you google. screw you chatgpt. rgb565_t instead of swap565_t was the fix. and not even uint16_t. not even anything in lvcfg.h. hahah.
+    tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::rgb565_t*)&color_p->full);
+    tft.endWrite();
+    lv_disp_flush_ready(disp);
+}
+
 Level lvl(""); // dummy level, we'll load the actual thing later on
 void setup() {
     Serial.begin(115200);
@@ -67,43 +85,50 @@ void setup() {
     etft();
     tft.init();
     tft.setRotation(3);
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_WHITE);
+    lv_init();
+    lv_disp_draw_buf_init(&draw_buf, buf[0], buf[1], W * 10);
+
+    // https://github.com/lovyan03/LovyanGFX/blob/master/examples/Advanced/LVGL_PlatformIO/src/main.cpp#L67
+    static lv_disp_drv_t disp_drv;
+    lv_disp_drv_init(&disp_drv);
+    disp_drv.hor_res = W;
+    disp_drv.ver_res = H;
+    disp_drv.flush_cb = flush_gfx;
+    disp_drv.draw_buf = &draw_buf;
+    lv_disp_drv_register(&disp_drv);
+
     esd();
     maps_init();
 
-    etft();
-    tft.setCursor(0, 0);
-    esd();
     auto levels = maps_list();
     auto diffs = difficulty_list(levels[0]);
     lvl = load_level(diffs[0]);
     etft();
-    tft.println(diffs.size());
-    for(auto lv : levels)
-        tft.println(lv);
-    for(auto d : diffs)
-        tft.println(d);
 
-    delay(2000);
-    tft.fillScreen(TFT_BLACK);
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
 }
-std::vector<LevelRenderObject> past;
+std::vector<lv_obj_t*> past;
 void loop() {
-    auto now = millis();
+    for(auto x : past)
+        lv_obj_del(x);
+    past.clear();
     auto cur = lvl.render(millis());
-    for(auto x : past) {
+    for(auto x : cur) {
         int r = x.big ? 35 : 20;
-        tft.fillCircle(x.x, 170 / 2, r, TFT_BLACK);
-    }
-    for(auto x : past = cur) {
-        int r = x.big ? 35 : 20;
-        int c = x.kat ? TFT_CYAN : TFT_RED;
-        tft.fillCircle(x.x, 170 / 2, r, c);
-    }
-    tft.startWrite();
-    tft.endWrite();
-    tft.flush();
+        auto c = x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
 
-    delay(33 - millis() + now);
+        lv_obj_t* circle = lv_obj_create(lv_scr_act());
+        lv_obj_set_x(circle, x.x - r);
+        lv_obj_set_y(circle, 170 / 2 - r);
+        lv_obj_set_size(circle, 2 * r, 2 * r);
+        lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_style_bg_color(circle, lv_palette_main(c), 0);
+        lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(circle, 0, 0);
+        past.push_back(circle);
+    }
+
+    lv_refr_now(lv_disp_get_default());
+    lv_timer_handler();
 }
