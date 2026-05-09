@@ -23,7 +23,7 @@ public:
             auto cfg = _bus_instance.config();
             cfg.spi_host = 1;
             cfg.spi_mode = 0;
-            cfg.freq_write = 27000000;
+            cfg.freq_write = 640000000; // how does this work???
             cfg.freq_read = 10000000;
             cfg.pin_sclk = 14;
             cfg.pin_mosi = 15;
@@ -48,7 +48,7 @@ public:
             cfg.invert = true;
             cfg.rgb_order = false;
             cfg.dlen_16bit = false;
-            cfg.bus_shared = true;
+            cfg.bus_shared = false;
             _panel_instance.config(cfg);
         }
 
@@ -88,12 +88,20 @@ void setup() {
     delay(5000);
     tft.fillScreen(TFT_BLACK);
 }
+std::vector<LevelRenderObject> past;
 void loop() {
-    tft.fillRect(0, 170 / 2 - 60, 320, 120, TFT_BLACK);
-    for(auto x : lvl.render(millis())) {
+    for(auto x : past) {
+        int r = x.big ? 50 : 30;
+        tft.fillCircle(x.x, 170 / 2, r, TFT_BLACK);
+    }
+    for(auto x : past = lvl.render(millis())) {
         int r = x.big ? 50 : 30;
         int c = x.kat ? TFT_CYAN : TFT_RED;
         tft.fillCircle(x.x, 170 / 2, r, c);
     }
+    tft.startWrite();
+    tft.endWrite();
+    tft.flush();
+
     delay(20);
 }
