@@ -24,12 +24,15 @@ Level::Level(String txt) {
 std::vector<LevelRenderObject> Level::render(double t) {
     std::vector<LevelRenderObject> ret;
     for(auto obj : hit_objects) {
-        if(abs(obj.time - t) < 1000) ret.push_back((LevelRenderObject) {
-            .x = (obj.time - t) / 2 + 50,
-            .type = obj.type,
-            .kat = (obj.sound & 2) || (obj.sound & 8),
-            .big = obj.sound & 4
-        });
+        if(abs(obj.time - t) < 2000) {
+            int x = (obj.time - t) / 4 + 50;
+            if(x > -40 && x < 360) ret.push_back((LevelRenderObject) {
+                .x = x,
+                .type = obj.type,
+                .kat = (obj.sound & 2) || (obj.sound & 8),
+                .big = obj.sound & 4
+            });
+        }
     }
     std::reverse(ret.begin(), ret.end());
     return ret;
