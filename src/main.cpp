@@ -66,7 +66,7 @@ void setup() {
 
     etft();
     tft.init();
-    tft.setRotation(1);
+    tft.setRotation(3);
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_WHITE);
     esd();
@@ -85,17 +85,19 @@ void setup() {
     for(auto d : diffs)
         tft.println(d);
 
-    delay(5000);
+    delay(2000);
     tft.fillScreen(TFT_BLACK);
 }
 std::vector<LevelRenderObject> past;
 void loop() {
+    auto now = millis();
+    auto cur = lvl.render(millis());
     for(auto x : past) {
-        int r = x.big ? 50 : 30;
+        int r = x.big ? 35 : 20;
         tft.fillCircle(x.x, 170 / 2, r, TFT_BLACK);
     }
-    for(auto x : past = lvl.render(millis())) {
-        int r = x.big ? 50 : 30;
+    for(auto x : past = cur) {
+        int r = x.big ? 35 : 20;
         int c = x.kat ? TFT_CYAN : TFT_RED;
         tft.fillCircle(x.x, 170 / 2, r, c);
     }
@@ -103,5 +105,5 @@ void loop() {
     tft.endWrite();
     tft.flush();
 
-    delay(20);
+    delay(33 - millis() + now);
 }

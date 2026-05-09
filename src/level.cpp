@@ -23,10 +23,9 @@ Level::Level(String txt) {
 }
 std::vector<LevelRenderObject> Level::render(double t) {
     std::vector<LevelRenderObject> ret;
-    t /= 2; // px to ms ratio
     for(auto obj : hit_objects) {
         if(abs(obj.time - t) < 1000) ret.push_back((LevelRenderObject) {
-            .x = obj.time - t + 50,
+            .x = (obj.time - t) / 2 + 50,
             .type = obj.type,
             .kat = (obj.sound & 2) || (obj.sound & 8),
             .big = obj.sound & 4
