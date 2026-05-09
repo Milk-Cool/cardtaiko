@@ -25,7 +25,7 @@ std::vector<LevelRenderObject> Level::render(double t) {
     std::vector<LevelRenderObject> ret;
     for(auto obj : hit_objects) {
         if(abs(obj.time - t) < 2000) {
-            int x = (obj.time - t) / 4 + 50;
+            int x = (obj.time - t) / 3 + 50;
             if(x > -40 && x < 360) ret.push_back((LevelRenderObject) {
                 .x = x,
                 .type = obj.type,
