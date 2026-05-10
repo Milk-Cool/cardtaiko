@@ -7,12 +7,14 @@ typedef struct {
     double time;
     uint8_t type;
     uint8_t sound;
+    uint16_t len;
 } LevelHitObject;
 typedef struct {
     int x;
     uint8_t type;
     bool kat;
     bool big;
+    uint16_t len;
 } LevelRenderObject;
 typedef struct {
     double t;
@@ -20,6 +22,11 @@ typedef struct {
     uint8_t m;
     bool kat;
 } CachedDoubleHit;
+typedef struct {
+    double t;
+    double l;
+    bool uninherited;
+} TimingPoint;
 class Level {
     public:
         Level(String txt);
@@ -37,4 +44,6 @@ class Level {
         bool is_great(double t);
         bool is_ok(double t);
         bool is_miss(double t);
+        double slider_mult;
+        std::vector<TimingPoint> timings;
 };

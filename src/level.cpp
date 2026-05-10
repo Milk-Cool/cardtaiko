@@ -1,6 +1,10 @@
+// https://osu.ppy.sh/wiki/en/Client/File_formats/osu_%28file_format%29
+
 #include "level.h"
 #include "misc.h"
 #include <algorithm>
+
+static int lendiv = 3;
 
 Level::Level(String txt) {
     auto split = split_string(txt, '\n', true);
@@ -16,11 +20,19 @@ Level::Level(String txt) {
             hit_objects.push_back((LevelHitObject) {
                 .time = split[2].toDouble(),
                 .type = split[3].toInt(),
-                .sound = split[4].toInt()
+                .sound = split[4].toInt(),
+                .len = split[3].toInt() & 2 ? split[7].toFloat() : 0
             });
         } else if(category == "[Difficulty]") {
             auto split = split_string(str, ':', false);
             if(split[0] == "OverallDifficulty") overall_difficulty = split[1].toInt();
+        } else if(category == "[TimingPoints]") {
+            auto split = split_string(str, ',', false);
+            timings.push_back((TimingPoint) {
+                .t = split[0].toDouble(),
+                .l = split[1].toDouble(),
+                .uninherited = split[6] == "1"
+            });
         }
     }
 }
@@ -32,19 +44,31 @@ std::vector<LevelRenderObject> Level::render(double t) {
         if(abs(obj.time - t) >= 2000) continue;
         bool flag = false;
         for(auto x : hit_idx)
-            if(i - 1== x) {
+            if(i - 1 == x) {
                 flag = true;
                 break;
             }
         if(flag) continue;
         
-        int x = (obj.time - t) / 3 + 40;
-        if(x > -40 && x < 360) ret.push_back((LevelRenderObject) {
-            .x = x,
+        int minx = (obj.time - t) / lendiv + 40;
+        int maxx = (obj.time - t) / lendiv + 40 + obj.len / 2 * lendiv;
+        if(maxx < -40 || minx > 360) continue;
+        LevelRenderObject res = {
+            .x = minx,
             .type = obj.type,
             .kat = (obj.sound & 2) || (obj.sound & 8),
             .big = obj.sound & 4
-        });
+        };
+        if(obj.type & 2) {
+            // int16_t beat_dur = 0;
+            // for(auto timing : timings) {
+            //     if(timing.t > obj.time + 1) break;
+            //     if(timing.uninherited) beat_dur = timing.l;
+            //     else beat_dur *= -timing.l / 100;
+            // }
+            res.len = (double)obj.len / 2 * lendiv; // 640 = 2 * 320, DisplayWidth = 320
+        }
+        ret.push_back(res);
     }
     std::reverse(ret.begin(), ret.end());
     return ret;

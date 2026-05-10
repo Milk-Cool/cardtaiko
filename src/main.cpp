@@ -104,8 +104,9 @@ void setup() {
     maps_init();
 
     auto levels = maps_list();
-    auto diffs = difficulty_list(levels[0]);
-    lvl = load_level(diffs[2]);
+    auto diffs = difficulty_list(levels[3]);
+    Serial.println(diffs[2]);
+    lvl = load_level(diffs[1]);
     etft();
 
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
@@ -142,13 +143,13 @@ void loop() {
     auto cur = lvl.render(millis());
     for(auto x : cur) {
         int r = x.big ? 35 : 20;
-        auto c = x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
+        auto c = x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
 
         lv_obj_t* circle = lv_obj_create(lv_scr_act());
         lv_obj_set_x(circle, x.x - r);
         lv_obj_set_y(circle, 170 / 2 - r);
-        lv_obj_set_size(circle, 2 * r, 2 * r);
-        lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_size(circle, 2 * r + x.len, 2 * r);
+        lv_obj_set_style_radius(circle, r, 0);
         lv_obj_set_style_bg_color(circle, lv_palette_main(c), 0);
         lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
         lv_obj_set_style_border_width(circle, 0, 0);
