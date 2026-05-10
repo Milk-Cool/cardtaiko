@@ -37,7 +37,7 @@ Level::Level(String txt) {
     }
 
     int sum = 0, i = 0;
-    for(auto obj& : hit_objects) {
+    for(auto obj : hit_objects) {
         if(obj.type & 2) continue;
         i++;
         sum += min(i / 10, 10);
