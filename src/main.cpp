@@ -12,6 +12,8 @@
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[2][W * 10]; // what.
 
+static bool simple_rendering = true;
+
 void etft() {
     digitalWrite(13, LOW);
     digitalWrite(5, HIGH);
@@ -80,6 +82,7 @@ void flush_gfx(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) 
 Level lvl(""); // dummy level, we'll load the actual thing later on
 lv_obj_t* score;
 lv_obj_t* combo;
+lv_obj_t* rating;
 void setup() {
     Serial.begin(115200);
     delay(1000);
@@ -126,6 +129,14 @@ void setup() {
     lv_obj_set_style_text_color(combo, lv_color_white(), 0);
     lv_label_set_text(combo, "0");
 
+    rating = lv_label_create(lv_scr_act());
+    lv_obj_set_x(rating, 15);
+    lv_obj_set_y(rating, 30);
+    lv_obj_set_style_text_align(rating, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(rating, lv_color_white(), 0);
+    lv_obj_set_width(rating, 50);
+    lv_label_set_text(rating, "");
+
     for(int i = 35; i >= 20; i -= 15) {
         lv_obj_t* circle = lv_obj_create(lv_scr_act());
         lv_obj_set_x(circle, 40 - i);
@@ -165,10 +176,15 @@ void loop() {
         lv_obj_set_size(circle, 2 * r + x.len, 2 * r);
         lv_obj_set_style_radius(circle, r, 0);
         lv_obj_set_style_bg_color(circle, lv_palette_main(c), 0);
-        lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_width(circle, 0, 0);
+        lv_obj_set_style_bg_opa(circle, simple_rendering ? LV_OPA_TRANSP : LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(circle, simple_rendering ? 2 : 0, 0);
+        lv_obj_set_style_border_color(circle, lv_palette_main(c), 0);
         past.push_back(circle);
     }
+    
+    auto rat = lvl.get_rating(millis());
+    lv_label_set_text(rating, rat.txt.c_str());
+    lv_obj_set_style_text_opa(rating, rat.opacity * 255, 0);
 
     lv_label_set_text(score, String(lvl.score).c_str());
     lv_label_set_text(combo, String(lvl.combo).c_str());

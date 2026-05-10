@@ -27,10 +27,15 @@ typedef struct {
     double l;
     bool uninherited;
 } TimingPoint;
+typedef struct {
+    String txt;
+    float opacity;
+} Rating;
 class Level {
     public:
         Level(String txt);
         std::vector<LevelRenderObject> render(double t);
+        Rating get_rating(double t);
         int8_t overall_difficulty = 0;
         unsigned combo = 0;
         unsigned great = 0;
@@ -49,4 +54,6 @@ class Level {
         double slider_mult;
         unsigned calc_score(unsigned base, bool big);
         std::vector<TimingPoint> timings;
+        String rating_txt = "";
+        double rating_time = 0;
 };
