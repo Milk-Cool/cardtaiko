@@ -4,6 +4,7 @@
 #include "lvcfg.h"
 #include <lvgl.h>
 #include "maps.h"
+#include "input.h"
 
 #define W 320
 #define H 170
@@ -82,6 +83,8 @@ void setup() {
     delay(1000);
     Serial.println("init");
 
+    init_input();
+
     etft();
     tft.init();
     tft.setRotation(3);
@@ -102,14 +105,37 @@ void setup() {
 
     auto levels = maps_list();
     auto diffs = difficulty_list(levels[0]);
-    lvl = load_level(diffs[0]);
+    lvl = load_level(diffs[2]);
     etft();
 
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
+
+    for(int i = 35; i >= 20; i -= 15) {
+        lv_obj_t* circle = lv_obj_create(lv_scr_act());
+        lv_obj_set_x(circle, 40 - i);
+        lv_obj_set_y(circle, 170 / 2 - i);
+        lv_obj_set_size(circle, 2 * i, 2 * i);
+        lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_style_bg_color(circle, lv_color_black(), 0);
+        lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_color(circle, lv_palette_main(LV_PALETTE_GREY), 0);
+        lv_obj_set_style_border_width(circle, 2, 0);
+    }
 }
 std::vector<lv_obj_t*> past;
+uint8_t last_mask = 0;
 void loop() {
+    uint8_t mask = get_input();
+    uint8_t pressed = (mask ^ last_mask) & mask;
+    if(check_input(pressed, INPUT_DON_RIGHT)) Serial.println("DON_RIGHT");
+    if(check_input(pressed, INPUT_DON_LEFT)) Serial.println("DON_LEFT");
+    if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
+    if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
+    if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
+    lvl.hit(millis(), pressed);
+    last_mask = mask;
+
     for(auto x : past)
         lv_obj_del(x);
     past.clear();

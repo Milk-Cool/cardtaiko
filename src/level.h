@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <vector>
+#include "input.h"
 
 typedef struct {
     double time;
@@ -17,6 +18,13 @@ class Level {
     public:
         Level(String txt);
         std::vector<LevelRenderObject> render(double t);
+        int8_t overall_difficulty = 0;
+        unsigned combo = 0;
+        unsigned great = 0;
+        unsigned ok = 0;
+        unsigned miss = 0;
+        void hit(double t, uint8_t button);
     private:
         std::vector<LevelHitObject> hit_objects;
+        std::vector<uint16_t> hit_idx;
 };
