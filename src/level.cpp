@@ -48,6 +48,11 @@ std::vector<LevelRenderObject> Level::render(double t) {
                 flag = true;
                 break;
             }
+        for(auto x : miss_idx)
+            if(i - 1 == x) {
+                flag = true;
+                break;
+            }
         if(flag) continue;
         
         int minx = (obj.time - t) / lendiv + 40;
@@ -60,12 +65,6 @@ std::vector<LevelRenderObject> Level::render(double t) {
             .big = obj.sound & 4
         };
         if(obj.type & 2) {
-            // int16_t beat_dur = 0;
-            // for(auto timing : timings) {
-            //     if(timing.t > obj.time + 1) break;
-            //     if(timing.uninherited) beat_dur = timing.l;
-            //     else beat_dur *= -timing.l / 100;
-            // }
             res.len = (double)obj.len / 2 * lendiv; // 640 = 2 * 320, DisplayWidth = 320
         }
         ret.push_back(res);
@@ -82,14 +81,23 @@ bool Level::is_ok(double t) {
 bool Level::is_miss(double t) {
     return t <= (overall_difficulty <= 5 ? 135 - 8 * overall_difficulty : 120 - 5 * overall_difficulty);
 }
+unsigned Level::calc_score(unsigned base, bool big) {
+    return base * (1 + min(10, combo / 10)) * (big ? 2 : 1);
+}
 void Level::btn(double t, uint8_t button) {
-    if(button & ~INPUT_BOOTSEL == 0) return;
+    // if(!button) return;
 
     for(unsigned i = 0; i < cached.size(); i++) {
+        LevelHitObject& obj = hit_objects[cached[i].i];
         if(t - cached[i].t > 60) {
-            if(is_great(abs(cached[i].t - hit_objects[cached[i].i].time))) great++;
-            else if(is_ok(abs(cached[i].t - hit_objects[cached[i].i].time))) ok++;
-            hit_idx.push_back(cached[i].i);
+            if(obj.type & 2) {
+                score += 300;
+            } else {
+                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, false); combo++; }
+                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, false); combo++; }
+                else { miss++; combo = 0; }
+                hit_idx.push_back(cached[i].i);
+            }
             cached.erase(cached.begin() + i);
             i--;
             continue;
@@ -100,9 +108,15 @@ void Level::btn(double t, uint8_t button) {
         if(!cached[i].kat && check_input(cached[i].m, INPUT_DON_LEFT) && check_input(button, INPUT_DON_RIGHT)) hit = true;
         if(!cached[i].kat && check_input(cached[i].m, INPUT_DON_RIGHT) && check_input(button, INPUT_DON_LEFT)) hit = true;
         if(hit) {
-            if(is_great(abs(cached[i].t - hit_objects[cached[i].i].time))) great++;
-            else if(is_ok(abs(cached[i].t - hit_objects[cached[i].i].time))) ok++;
-            hit_idx.push_back(cached[i].i);
+            if(obj.type & 2) {
+                // drumroll
+                score += (obj.sound & 4) ? 600 : 300;
+            } else {
+                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, true); combo++; }
+                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, true); combo++; }
+                else { miss++; combo = 0; }
+                hit_idx.push_back(cached[i].i);
+            }
             cached.erase(cached.begin() + i);
             i--;
         }
@@ -110,15 +124,43 @@ void Level::btn(double t, uint8_t button) {
 
     unsigned i = 0;
     unsigned min_idx = 0xffffffff, min_val = 501;
-    bool is_big = false, is_kat = false;
+    unsigned max_idx = 0xffffffff, max_val = 0;
+    bool min_is_big = false, min_is_kat = false;
+    bool max_is_big = false, max_is_kat = false;
     for(auto obj : hit_objects) {
         i++;
         double diff = abs(obj.time - t);
-        if(!is_miss(diff)) continue;
         bool kat = (obj.sound & 2) || (obj.sound & 8);
         bool big = obj.sound & 4;
-        if(kat && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT)) continue;
-        if(!kat && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) continue;
+        if(!is_miss(diff) && !(obj.type & 2)) {
+            if(obj.time < t) {
+                bool flag = false;
+                for(auto x : miss_idx)
+                    if(i - 1 == x) {
+                        flag = true;
+                        break;
+                    }
+                for(auto x : hit_idx)
+                    if(i - 1 == x) {
+                        flag = true;
+                        break;
+                    }
+                if(!flag) {
+                    miss_idx.push_back(i - 1);
+                    combo = 0;
+                }
+            }
+            continue;
+        }
+        if(!(obj.type & 2) && kat && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT)) continue;
+        if(!(obj.type & 2) && !kat && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) continue;
+        if((obj.type & 2) && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT) && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) continue;
+        if(obj.time < t && max_val < obj.time && (obj.type & 2)) {
+            max_idx = i - 1;
+            max_val = obj.time;
+            max_is_big = big;
+            max_is_kat = kat;
+        }
 
         bool flag = false;
         for(auto x : hit_idx)
@@ -126,33 +168,53 @@ void Level::btn(double t, uint8_t button) {
                 flag = true;
                 break;
             }
+        for(auto x : miss_idx)
+            if(i - 1 == x) {
+                flag = true;
+                break;
+            }
         if(flag) continue;
 
-        if(diff < min_val) {
+        if(diff < min_val && !(obj.type & 2)) { // delibirately ignore sliders
             min_idx = i - 1;
             min_val = diff;
-            is_big = big;
-            is_kat = kat;
+            min_is_big = big;
+            min_is_kat = kat;
         }
     }
-    if(min_idx == 0xffffffff) return;
+    if(min_idx == 0xffffffff) {
+        if(max_idx == 0xffffffff) return;
+        LevelHitObject& obj = hit_objects[max_idx];
+        int x = (obj.time - t) / lendiv + obj.len / 2 * lendiv;
+        if(x >= 0) {
+            if(max_is_big)
+                cached.push_back((CachedDoubleHit) {
+                    .t = t,
+                    .i = max_idx,
+                    .m = button,
+                    .kat = max_is_kat
+                });
+            else {
+                score += 300;
+            }
+        }
+        return;
+    }
 
-    if(is_big) {
+    if(min_is_big && !((button & INPUT_DON_LEFT) && (button & INPUT_DON_RIGHT)) && !((button & INPUT_KAT_LEFT) && (button & INPUT_KAT_RIGHT))) {
         cached.push_back((CachedDoubleHit) {
             .t = t,
             .i = min_idx,
             .m = button,
-            .kat = is_kat
+            .kat = min_is_kat
         });
         return;
     }
 
     // OD & timing windows
     // https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty
-    if(is_great(min_val))
-        great++;
-    else if(is_ok(min_val))
-        ok++;
-    else miss++;
+    if(is_great(min_val)) { great++; score += calc_score(300, min_is_big); combo++; }
+    else if(is_ok(min_val)) { ok++; score += calc_score(100, min_is_big); combo++; }
+    else { miss++; combo = 0; }
     hit_idx.push_back(min_idx);
 }

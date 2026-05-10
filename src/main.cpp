@@ -78,6 +78,8 @@ void flush_gfx(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) 
 }
 
 Level lvl(""); // dummy level, we'll load the actual thing later on
+lv_obj_t* score;
+lv_obj_t* combo;
 void setup() {
     Serial.begin(115200);
     delay(1000);
@@ -111,6 +113,18 @@ void setup() {
 
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
+
+    score = lv_label_create(lv_scr_act());
+    lv_obj_set_x(score, 10);
+    lv_obj_set_y(score, 10);
+    lv_obj_set_style_text_color(score, lv_color_white(), 0);
+    lv_label_set_text(score, "0");
+
+    combo = lv_label_create(lv_scr_act());
+    lv_obj_set_x(combo, 250);
+    lv_obj_set_y(combo, 10);
+    lv_obj_set_style_text_color(combo, lv_color_white(), 0);
+    lv_label_set_text(combo, "0");
 
     for(int i = 35; i >= 20; i -= 15) {
         lv_obj_t* circle = lv_obj_create(lv_scr_act());
@@ -155,6 +169,9 @@ void loop() {
         lv_obj_set_style_border_width(circle, 0, 0);
         past.push_back(circle);
     }
+
+    lv_label_set_text(score, String(lvl.score).c_str());
+    lv_label_set_text(combo, String(lvl.combo).c_str());
 
     lv_refr_now(lv_disp_get_default());
     lv_timer_handler();
