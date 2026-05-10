@@ -133,7 +133,7 @@ void loop() {
     if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
     if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
     if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
-    lvl.hit(millis(), pressed);
+    lvl.btn(millis(), pressed);
     last_mask = mask;
 
     for(auto x : past)

@@ -49,15 +49,48 @@ std::vector<LevelRenderObject> Level::render(double t) {
     std::reverse(ret.begin(), ret.end());
     return ret;
 }
-void Level::hit(double t, uint8_t button) {
+bool Level::is_great(double t) {
+    return t <= 50 - 3 * overall_difficulty;
+}
+bool Level::is_ok(double t) {
+    return t <= (overall_difficulty <= 5 ? 120 - 8 * overall_difficulty : 110 - 6 * overall_difficulty);
+}
+bool Level::is_miss(double t) {
+    return t <= (overall_difficulty <= 5 ? 135 - 8 * overall_difficulty : 120 - 5 * overall_difficulty);
+}
+void Level::btn(double t, uint8_t button) {
     if(button & ~INPUT_BOOTSEL == 0) return;
+
+    for(unsigned i = 0; i < cached.size(); i++) {
+        if(t - cached[i].t > 60) {
+            if(is_great(abs(cached[i].t - hit_objects[cached[i].i].time))) great++;
+            else if(is_ok(abs(cached[i].t - hit_objects[cached[i].i].time))) ok++;
+            hit_idx.push_back(cached[i].i);
+            cached.erase(cached.begin() + i);
+            i--;
+            continue;
+        }
+        bool hit = false;
+        if(cached[i].kat && check_input(cached[i].m, INPUT_KAT_LEFT) && check_input(button, INPUT_KAT_RIGHT)) hit = true;
+        if(cached[i].kat && check_input(cached[i].m, INPUT_KAT_RIGHT) && check_input(button, INPUT_KAT_LEFT)) hit = true;
+        if(!cached[i].kat && check_input(cached[i].m, INPUT_DON_LEFT) && check_input(button, INPUT_DON_RIGHT)) hit = true;
+        if(!cached[i].kat && check_input(cached[i].m, INPUT_DON_RIGHT) && check_input(button, INPUT_DON_LEFT)) hit = true;
+        if(hit) {
+            if(is_great(abs(cached[i].t - hit_objects[cached[i].i].time))) great++;
+            else if(is_ok(abs(cached[i].t - hit_objects[cached[i].i].time))) ok++;
+            hit_idx.push_back(cached[i].i);
+            cached.erase(cached.begin() + i);
+            i--;
+        }
+    }
 
     unsigned i = 0;
     unsigned min_idx = 0xffffffff, min_val = 501;
+    bool is_big = false, is_kat = false;
     for(auto obj : hit_objects) {
         i++;
         double diff = abs(obj.time - t);
-        if(diff > (overall_difficulty <= 5 ? 135 - 8 * overall_difficulty : 120 - 5 * overall_difficulty)) continue;
+        if(!is_miss(diff)) continue;
         bool kat = (obj.sound & 2) || (obj.sound & 8);
         bool big = obj.sound & 4;
         if(kat && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT)) continue;
@@ -74,15 +107,27 @@ void Level::hit(double t, uint8_t button) {
         if(diff < min_val) {
             min_idx = i - 1;
             min_val = diff;
+            is_big = big;
+            is_kat = kat;
         }
     }
     if(min_idx == 0xffffffff) return;
 
+    if(is_big) {
+        cached.push_back((CachedDoubleHit) {
+            .t = t,
+            .i = min_idx,
+            .m = button,
+            .kat = is_kat
+        });
+        return;
+    }
+
     // OD & timing windows
     // https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty
-    if(min_val <= 50 - 3 * overall_difficulty)
+    if(is_great(min_val))
         great++;
-    else if(min_val <= (overall_difficulty <= 5 ? 120 - 8 * overall_difficulty : 110 - 6 * overall_difficulty))
+    else if(is_ok(min_val))
         ok++;
     else miss++;
     hit_idx.push_back(min_idx);

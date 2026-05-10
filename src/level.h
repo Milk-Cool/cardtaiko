@@ -14,6 +14,12 @@ typedef struct {
     bool kat;
     bool big;
 } LevelRenderObject;
+typedef struct {
+    double t;
+    unsigned i;
+    uint8_t m;
+    bool kat;
+} CachedDoubleHit;
 class Level {
     public:
         Level(String txt);
@@ -23,8 +29,12 @@ class Level {
         unsigned great = 0;
         unsigned ok = 0;
         unsigned miss = 0;
-        void hit(double t, uint8_t button);
+        void btn(double t, uint8_t button);
     private:
         std::vector<LevelHitObject> hit_objects;
         std::vector<uint16_t> hit_idx;
+        std::vector<CachedDoubleHit> cached;
+        bool is_great(double t);
+        bool is_ok(double t);
+        bool is_miss(double t);
 };
