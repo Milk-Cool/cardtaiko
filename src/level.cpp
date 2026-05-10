@@ -35,6 +35,13 @@ Level::Level(String txt) {
             });
         }
     }
+
+    int sum = 0;
+    for(int i = 1; i <= hit_objects.size(); i++) {
+        i++;
+        sum += min(i / 10, 10);
+    }
+    combo_bonus = ceil(100000.0 / sum) * 10;
 }
 std::vector<LevelRenderObject> Level::render(double t) {
     std::vector<LevelRenderObject> ret;
@@ -86,7 +93,7 @@ bool Level::is_miss(double t) {
     return t <= (overall_difficulty <= 5 ? 135 - 8 * overall_difficulty : 120 - 5 * overall_difficulty);
 }
 unsigned Level::calc_score(unsigned base, bool big) {
-    return base * (1 + min(10, combo / 10)) * (big ? 2 : 1);
+    return (base + combo_bonus * min(10, combo / 10)) * (big ? 2 : 1);
 }
 #define TXT_GREAT { rating_txt = "GREAT"; rating_time = t; }
 #define TXT_OK { rating_txt = "OK"; rating_time = t; }

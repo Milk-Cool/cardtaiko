@@ -56,4 +56,5 @@ class Level {
         std::vector<TimingPoint> timings;
         String rating_txt = "";
         double rating_time = 0;
+        int combo_bonus = 0;
 };
