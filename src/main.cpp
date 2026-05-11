@@ -83,6 +83,7 @@ Level lvl(""); // dummy level, we'll load the actual thing later on
 lv_obj_t* score;
 lv_obj_t* combo;
 lv_obj_t* rating;
+lv_obj_t* delta;
 void setup() {
     Serial.begin(115200);
     delay(1000);
@@ -109,9 +110,9 @@ void setup() {
     maps_init();
 
     auto levels = maps_list();
-    auto diffs = difficulty_list(levels[3]);
+    auto diffs = difficulty_list(levels[0]);
     Serial.println(diffs[2]);
-    lvl = load_level(diffs[1]);
+    lvl = load_level(diffs[2]);
     etft();
 
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
@@ -119,23 +120,31 @@ void setup() {
 
     score = lv_label_create(lv_scr_act());
     lv_obj_set_x(score, 10);
-    lv_obj_set_y(score, 10);
+    lv_obj_set_y(score, 0);
     lv_obj_set_style_text_color(score, lv_color_white(), 0);
     lv_label_set_text(score, "0");
 
     combo = lv_label_create(lv_scr_act());
     lv_obj_set_x(combo, 250);
-    lv_obj_set_y(combo, 10);
+    lv_obj_set_y(combo, 0);
     lv_obj_set_style_text_color(combo, lv_color_white(), 0);
     lv_label_set_text(combo, "0");
 
     rating = lv_label_create(lv_scr_act());
     lv_obj_set_x(rating, 15);
-    lv_obj_set_y(rating, 30);
+    lv_obj_set_y(rating, 17);
     lv_obj_set_style_text_align(rating, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_style_text_color(rating, lv_color_white(), 0);
     lv_obj_set_width(rating, 50);
     lv_label_set_text(rating, "");
+
+    delta = lv_label_create(lv_scr_act());
+    lv_obj_set_x(delta, 15);
+    lv_obj_set_y(delta, 32);
+    lv_obj_set_style_text_align(delta, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(delta, lv_color_white(), 0);
+    lv_obj_set_width(delta, 50);
+    lv_label_set_text(delta, "");
 
     for(int i = 35; i >= 20; i -= 15) {
         lv_obj_t* circle = lv_obj_create(lv_scr_act());
@@ -184,7 +193,9 @@ void loop() {
     
     auto rat = lvl.get_rating(millis());
     lv_label_set_text(rating, rat.txt.c_str());
+    lv_label_set_text(delta, rat.delta.c_str());
     lv_obj_set_style_text_opa(rating, rat.opacity * 255, 0);
+    lv_obj_set_style_text_opa(delta, rat.opacity * 255, 0);
 
     lv_label_set_text(score, String(lvl.score).c_str());
     lv_label_set_text(combo, String(lvl.combo).c_str());

@@ -42,7 +42,7 @@ Level::Level(String txt) {
         i++;
         sum += min(i / 10, 10);
     }
-    combo_bonus = ceil(100000.0 / sum) * 10;
+    combo_bonus = 1000000.0 / sum;
 }
 std::vector<LevelRenderObject> Level::render(double t) {
     std::vector<LevelRenderObject> ret;
@@ -81,8 +81,8 @@ std::vector<LevelRenderObject> Level::render(double t) {
     return ret;
 }
 Rating Level::get_rating(double t) {
-    if(t - rating_time > 400) return (Rating) { .txt = "", .opacity = 0 };
-    return (Rating) { .txt = rating_txt, .opacity = t - rating_time <= 200 ? 1 : 1 - (t - rating_time - 200) / 200 };
+    if(t - rating_time > 400) return (Rating) { .txt = "", .delta = "", .opacity = 0 };
+    return (Rating) { .txt = rating_txt, .delta = delta_txt, .opacity = t - rating_time <= 200 ? 1 : 1 - (t - rating_time - 200) / 200 };
 }
 bool Level::is_great(double t) {
     return t <= 50 - 3 * overall_difficulty;
@@ -94,11 +94,11 @@ bool Level::is_miss(double t) {
     return t <= (overall_difficulty <= 5 ? 135 - 8 * overall_difficulty : 120 - 5 * overall_difficulty);
 }
 unsigned Level::calc_score(unsigned base, bool big) {
-    return (base + combo_bonus * min(10, combo / 10)) * (big ? 2 : 1);
+    return (base / 100) * (100 + ceil(combo_bonus / 30) * 10 * min(10, combo / 10)) * (big ? 2 : 1);
 }
-#define TXT_GREAT { rating_txt = "GREAT"; rating_time = t; }
-#define TXT_OK { rating_txt = "OK"; rating_time = t; }
-#define TXT_MISS { rating_txt = "MISS"; rating_time = t; }
+#define TXT_GREAT(s) { rating_txt = "GREAT"; rating_time = t; delta_txt = String(s); }
+#define TXT_OK(s) { rating_txt = "OK"; rating_time = t; delta_txt = String(s); }
+#define TXT_MISS { rating_txt = "MISS"; rating_time = t; delta_txt = ""; }
 void Level::btn(double t, uint8_t button) {
     // if(!button) return;
 
@@ -106,10 +106,10 @@ void Level::btn(double t, uint8_t button) {
         LevelHitObject& obj = hit_objects[cached[i].i];
         if(t - cached[i].t > 60) {
             if(obj.type & 2) {
-                score += 300;
+                score += 300; TXT_GREAT(300)
             } else {
-                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, false); combo++; TXT_GREAT }
-                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, false); combo++; TXT_OK }
+                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, false); combo++; TXT_GREAT(calc_score(300, false)) }
+                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, false); combo++; TXT_OK(calc_score(100, false)) }
                 else { miss++; combo = 0; TXT_MISS }
                 hit_idx.push_back(cached[i].i);
             }
@@ -125,10 +125,10 @@ void Level::btn(double t, uint8_t button) {
         if(hit) {
             if(obj.type & 2) {
                 // drumroll
-                score += (obj.sound & 4) ? 600 : 300;
+                score += (obj.sound & 4) ? 600 : 300; TXT_GREAT((obj.sound & 4) ? 600 : 300)
             } else {
-                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, true); combo++; TXT_GREAT }
-                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, true); combo++; TXT_OK }
+                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, true); combo++; TXT_GREAT(calc_score(300, true)) }
+                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, true); combo++; TXT_OK(calc_score(100, true)) }
                 else { miss++; combo = 0; TXT_MISS }
                 hit_idx.push_back(cached[i].i);
             }
@@ -210,7 +210,7 @@ void Level::btn(double t, uint8_t button) {
                     .kat = max_is_kat
                 });
             else {
-                score += 300;
+                score += 300; TXT_GREAT(300)
             }
         }
         return;
@@ -228,8 +228,8 @@ void Level::btn(double t, uint8_t button) {
 
     // OD & timing windows
     // https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty
-    if(is_great(min_val)) { great++; score += calc_score(300, min_is_big); combo++; TXT_GREAT }
-    else if(is_ok(min_val)) { ok++; score += calc_score(100, min_is_big); combo++; TXT_OK }
+    if(is_great(min_val)) { great++; score += calc_score(300, min_is_big); combo++; TXT_GREAT(calc_score(300, min_is_big)) }
+    else if(is_ok(min_val)) { ok++; score += calc_score(100, min_is_big); combo++; TXT_OK(calc_score(100, min_is_big)) }
     else { miss++; combo = 0; TXT_MISS }
     hit_idx.push_back(min_idx);
 }

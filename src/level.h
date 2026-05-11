@@ -29,6 +29,7 @@ typedef struct {
 } TimingPoint;
 typedef struct {
     String txt;
+    String delta;
     float opacity;
 } Rating;
 class Level {
@@ -55,6 +56,7 @@ class Level {
         unsigned calc_score(unsigned base, bool big);
         std::vector<TimingPoint> timings;
         String rating_txt = "";
+        String delta_txt = "";
         double rating_time = 0;
         int combo_bonus = 0;
 };
