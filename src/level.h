@@ -9,6 +9,7 @@ typedef struct {
     uint8_t sound;
     uint16_t len;
     uint8_t denden;
+    uint16_t denden_cnt;
 } LevelHitObject;
 typedef struct {
     int x;

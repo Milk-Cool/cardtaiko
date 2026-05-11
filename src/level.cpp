@@ -26,7 +26,8 @@ Level::Level(String txt) {
                     : (split[3].toInt() & 8)
                     ? split[5].toFloat() - split[2].toDouble()
                     : 0,
-                .denden = 2
+                .denden = 2,
+                .denden_cnt = 0
             });
         } else if(category == "[Difficulty]") {
             auto split = split_string(str, ':', false);
@@ -44,7 +45,7 @@ Level::Level(String txt) {
     int sum = 0, i = 0;
     for(auto obj : hit_objects) {
         if(obj.type & 2) continue;
-        if(obj.type & 8) continue; // TODO: denden notes scoring on final hit
+        if(obj.type & 8) continue;
         i++;
         sum += min(i / 10, 10);
     }
@@ -228,6 +229,14 @@ void Level::btn(double t, uint8_t button) {
             else obj.denden ^= 1;
         }
         if(s) {
+            if(obj.type & 8)
+                obj.denden_cnt++;
+            uint16_t denden_tgt = (uint16_t)((obj.len / 1000) * (overall_difficulty < 5
+                ? 5 - 2 * (5 - overall_difficulty) / 5
+                : overall_difficulty == 5
+                ? 5
+                : 5 + 2.5 * (overall_difficulty - 5) / 5));
+            if((obj.type & 8) && obj.denden_cnt > denden_tgt) return;
             if(max_is_big && !(obj.type & 8))
                 cached.push_back((CachedDoubleHit) {
                     .t = t,
@@ -235,7 +244,10 @@ void Level::btn(double t, uint8_t button) {
                     .m = button,
                     .kat = max_is_kat
                 });
-            else {
+            else if((obj.type & 8) && obj.denden_cnt == denden_tgt) {
+                score += calc_score(300, max_is_big); TXT_GREAT(calc_score(300, max_is_big))
+                hit_idx.push_back(max_idx);
+            } else {
                 score += 300; TXT_GREAT(300)
             }
         }
