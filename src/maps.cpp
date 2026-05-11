@@ -9,6 +9,9 @@ bool maps_init() {
     }
     return ret;
 }
+void maps_deinit() {
+    SDFS.end();
+}
 
 std::vector<String> maps_list() {
     File maps = SDFS.open("/taiko", "r");

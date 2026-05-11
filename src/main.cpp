@@ -79,11 +79,82 @@ void flush_gfx(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) 
     lv_disp_flush_ready(disp);
 }
 
+static String filename(String path) {
+    auto idx = path.lastIndexOf('/');
+    if(idx == path.length() - 1) idx = path.substring(0, path.length() - 1).lastIndexOf('/');
+    return path.substring(idx + 1);
+}
+
+static uint64_t game_start = 0;
+static uint8_t menu_state = 0;
+#define MENU_MAIN 0
+#define MENU_LEVEL 1
+#define MENU_DIFF 2
+#define MENU_GAME 3
+#define MENU_PAUSE 4
+static std::vector<String> menu_options;
+static unsigned menu_idx;
+static String level_path;
+
 Level lvl(""); // dummy level, we'll load the actual thing later on
 lv_obj_t* score;
 lv_obj_t* combo;
 lv_obj_t* rating;
 lv_obj_t* delta;
+lv_obj_t* circles[2];
+lv_obj_t* menu;
+static void menu_main() {
+    menu_state = MENU_MAIN;
+    menu_options.clear();
+    menu_idx = 0;
+
+    menu_options.push_back("play");
+    // TODO
+}
+static void menu_level() {
+    menu_state = MENU_LEVEL;
+    menu_options.clear();
+    menu_idx = 0;
+
+    esd();
+    maps_init();
+    auto levels = maps_list();
+    for(auto level : levels)
+        menu_options.push_back(filename(level));
+    maps_deinit();
+    etft();
+}
+static void menu_diff() {
+    menu_state = MENU_DIFF;
+    menu_options.clear();
+    menu_idx = 0;
+
+    esd();
+    maps_init();
+    auto diffs = difficulty_list(level_path);
+    for(auto diff : diffs)
+        menu_options.push_back(filename(diff));
+    maps_deinit();
+    etft();
+}
+static void game_hide() {
+    lv_obj_set_style_opa(score, LV_OPA_0, 0);
+    lv_obj_set_style_opa(combo, LV_OPA_0, 0);
+    lv_obj_set_style_opa(rating, LV_OPA_0, 0);
+    lv_obj_set_style_opa(delta, LV_OPA_0, 0);
+    lv_obj_set_style_opa(circles[0], LV_OPA_0, 0);
+    lv_obj_set_style_opa(circles[1], LV_OPA_0, 0);
+    lv_obj_set_style_opa(menu, LV_OPA_100, 0);
+}
+static void game_show() {
+    lv_obj_set_style_opa(score, LV_OPA_100, 0);
+    lv_obj_set_style_opa(combo, LV_OPA_100, 0);
+    lv_obj_set_style_opa(rating, LV_OPA_100, 0);
+    lv_obj_set_style_opa(delta, LV_OPA_100, 0);
+    lv_obj_set_style_opa(circles[0], LV_OPA_100, 0);
+    lv_obj_set_style_opa(circles[1], LV_OPA_100, 0);
+    lv_obj_set_style_opa(menu, LV_OPA_0, 0);
+}
 void setup() {
     Serial.begin(115200);
     delay(1000);
@@ -105,15 +176,6 @@ void setup() {
     disp_drv.flush_cb = flush_gfx;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
-
-    esd();
-    maps_init();
-
-    auto levels = maps_list();
-    auto diffs = difficulty_list(levels[4]);
-    Serial.println(diffs[1]);
-    lvl = load_level(diffs[1]);
-    etft();
 
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
@@ -146,6 +208,16 @@ void setup() {
     lv_obj_set_width(delta, 50);
     lv_label_set_text(delta, "");
 
+    menu = lv_label_create(lv_scr_act());
+    lv_obj_set_x(menu, 0);
+    lv_obj_set_y(menu, 0);
+    lv_obj_set_style_text_align(menu, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(menu, lv_color_white(), 0);
+    lv_obj_set_width(menu, W);
+    lv_obj_set_height(menu, H);
+    lv_label_set_text(menu, "");
+
+    int j = 0;
     for(int i = 35; i >= 20; i -= 15) {
         lv_obj_t* circle = lv_obj_create(lv_scr_act());
         lv_obj_set_x(circle, 40 - i);
@@ -156,25 +228,69 @@ void setup() {
         lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
         lv_obj_set_style_border_color(circle, lv_palette_main(LV_PALETTE_GREY), 0);
         lv_obj_set_style_border_width(circle, 2, 0);
+        circles[j++] = circle;
     }
+
+    menu_main();
+    game_hide();
 }
 std::vector<lv_obj_t*> past;
 uint8_t last_mask = 0;
-void loop() {
-    uint8_t mask = get_input();
-    uint8_t pressed = (mask ^ last_mask) & mask;
-    if(check_input(pressed, INPUT_DON_RIGHT)) Serial.println("DON_RIGHT");
-    if(check_input(pressed, INPUT_DON_LEFT)) Serial.println("DON_LEFT");
-    if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
-    if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
-    if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
-    lvl.btn(millis(), pressed);
-    last_mask = mask;
+static void render_menu(uint8_t pressed) {
+    if(check_input(pressed, INPUT_KAT_LEFT)) {
+        if(menu_idx == 0) menu_idx = menu_options.size() - 1;
+        else menu_idx--;
+    } else if(check_input(pressed, INPUT_KAT_RIGHT)) {
+        if(menu_idx == menu_options.size() - 1) menu_idx = 0;
+        else menu_idx++;
+    }
+
+    String o = "";
+    for(int i = 0; i < menu_options.size(); i++)
+        o += (i == menu_idx ? "> " : "") + menu_options[i] + "\n";
+    lv_label_set_text(menu, o.c_str());
+}
+static void loop_main(uint8_t pressed) {
+    render_menu(pressed);
+
+    if(check_input(pressed, INPUT_DON_RIGHT)) {
+        String& sel = menu_options[menu_idx];
+        if(sel == "play") menu_level();
+    }
+}
+static void loop_level(uint8_t pressed) {
+    render_menu(pressed);
+
+    if(check_input(pressed, INPUT_DON_RIGHT)) {
+        String& sel = menu_options[menu_idx];
+        level_path = "/taiko/" + sel;
+        menu_diff();
+    } else if(check_input(pressed, INPUT_DON_LEFT))
+        menu_main();
+}
+static void loop_diff(uint8_t pressed) {
+    render_menu(pressed);
+
+    if(check_input(pressed, INPUT_DON_RIGHT)) {
+        String& sel = menu_options[menu_idx];
+        esd();
+        maps_init();
+        lvl = load_level(level_path + "/" + sel);
+        game_start = millis();
+        menu_state = MENU_GAME;
+        maps_deinit();
+        etft();
+        game_show();
+    } else if(check_input(pressed, INPUT_DON_LEFT))
+        menu_level();
+}
+static void loop_game(uint8_t pressed) {
+    lvl.btn(millis() - game_start, pressed);
 
     for(auto x : past)
         lv_obj_del(x);
     past.clear();
-    auto cur = lvl.render(millis());
+    auto cur = lvl.render(millis() - game_start);
     for(auto x : cur) {
         int r = x.big ? 35 : 20;
         auto c = x.type & 8 ? LV_PALETTE_INDIGO : x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
@@ -191,7 +307,7 @@ void loop() {
         past.push_back(circle);
     }
     
-    auto rat = lvl.get_rating(millis());
+    auto rat = lvl.get_rating(millis() - game_start);
     lv_label_set_text(rating, rat.txt.c_str());
     lv_label_set_text(delta, rat.delta.c_str());
     lv_obj_set_style_text_opa(rating, rat.opacity * 255, 0);
@@ -199,6 +315,25 @@ void loop() {
 
     lv_label_set_text(score, String(lvl.score).c_str());
     lv_label_set_text(combo, String(lvl.combo).c_str());
+}
+void loop() {
+    uint8_t mask = get_input();
+    uint8_t pressed = (mask ^ last_mask) & mask;
+    if(check_input(pressed, INPUT_DON_RIGHT)) Serial.println("DON_RIGHT");
+    if(check_input(pressed, INPUT_DON_LEFT)) Serial.println("DON_LEFT");
+    if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
+    if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
+    if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
+    last_mask = mask;
+
+    if(menu_state == MENU_MAIN)
+        loop_main(pressed);
+    else if(menu_state == MENU_LEVEL)
+        loop_level(pressed);
+    else if(menu_state == MENU_DIFF)
+        loop_diff(pressed);
+    else if(menu_state == MENU_GAME)
+        loop_game(pressed);
 
     lv_refr_now(lv_disp_get_default());
     lv_timer_handler();
