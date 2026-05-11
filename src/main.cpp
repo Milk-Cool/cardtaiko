@@ -12,7 +12,7 @@
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[2][W * 10]; // what.
 
-static bool simple_rendering = true;
+static bool simple_rendering = false;
 
 void etft() {
     digitalWrite(13, LOW);
@@ -110,9 +110,9 @@ void setup() {
     maps_init();
 
     auto levels = maps_list();
-    auto diffs = difficulty_list(levels[0]);
-    Serial.println(diffs[2]);
-    lvl = load_level(diffs[2]);
+    auto diffs = difficulty_list(levels[4]);
+    Serial.println(diffs[1]);
+    lvl = load_level(diffs[1]);
     etft();
 
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
@@ -168,16 +168,16 @@ void loop() {
     if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
     if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
     if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
-    lvl.btn(millis(), pressed);
+    lvl.btn(millis()  + 100000, pressed);
     last_mask = mask;
 
     for(auto x : past)
         lv_obj_del(x);
     past.clear();
-    auto cur = lvl.render(millis());
+    auto cur = lvl.render(millis() + 100000);
     for(auto x : cur) {
         int r = x.big ? 35 : 20;
-        auto c = x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
+        auto c = x.type & 8 ? LV_PALETTE_INDIGO : x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
 
         lv_obj_t* circle = lv_obj_create(lv_scr_act());
         lv_obj_set_x(circle, x.x - r);
@@ -191,7 +191,7 @@ void loop() {
         past.push_back(circle);
     }
     
-    auto rat = lvl.get_rating(millis());
+    auto rat = lvl.get_rating(millis() + 100000);
     lv_label_set_text(rating, rat.txt.c_str());
     lv_label_set_text(delta, rat.delta.c_str());
     lv_obj_set_style_text_opa(rating, rat.opacity * 255, 0);

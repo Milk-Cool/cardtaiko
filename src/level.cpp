@@ -21,7 +21,12 @@ Level::Level(String txt) {
                 .time = split[2].toDouble(),
                 .type = split[3].toInt(),
                 .sound = split[4].toInt(),
-                .len = split[3].toInt() & 2 ? split[7].toFloat() : 0
+                .len = (split[3].toInt() & 2)
+                    ? split[7].toFloat()
+                    : (split[3].toInt() & 8)
+                    ? split[5].toFloat() - split[2].toDouble()
+                    : 0,
+                .denden = 2
             });
         } else if(category == "[Difficulty]") {
             auto split = split_string(str, ':', false);
@@ -39,6 +44,7 @@ Level::Level(String txt) {
     int sum = 0, i = 0;
     for(auto obj : hit_objects) {
         if(obj.type & 2) continue;
+        if(obj.type & 8) continue; // TODO: denden notes scoring on final hit
         i++;
         sum += min(i / 10, 10);
     }
@@ -49,7 +55,7 @@ std::vector<LevelRenderObject> Level::render(double t) {
     unsigned i = 0;
     for(auto obj : hit_objects) {
         i++;
-        if(abs(obj.time - t) >= 2000) continue;
+        if(abs(obj.time - t) >= 2000 && !(obj.type & 8)) continue;
         bool flag = false;
         for(auto x : hit_idx)
             if(i - 1 == x) {
@@ -64,10 +70,18 @@ std::vector<LevelRenderObject> Level::render(double t) {
         if(flag) continue;
         
         int minx = (obj.time - t) / lendiv + 40;
-        int maxx = (obj.time - t) / lendiv + 40 + obj.len / 2 * lendiv;
+        int maxx = obj.type & 8
+            ? (obj.time + obj.len - t) / lendiv + 40
+            : (obj.time - t) / lendiv + 40 + obj.len / 2 * lendiv;
         if(maxx < -40 || minx > 360) continue;
         LevelRenderObject res = {
-            .x = minx,
+            .x = (obj.type & 8) ? (
+                obj.time > t
+                ? minx
+                : obj.time + obj.len > t
+                ? 40
+                : maxx
+            ) : minx,
             .type = obj.type,
             .kat = (obj.sound & 2) || (obj.sound & 8),
             .big = obj.sound & 4
@@ -105,7 +119,7 @@ void Level::btn(double t, uint8_t button) {
     for(unsigned i = 0; i < cached.size(); i++) {
         LevelHitObject& obj = hit_objects[cached[i].i];
         if(t - cached[i].t > 60) {
-            if(obj.type & 2) {
+            if((obj.type & 2) || (obj.type & 8)) {
                 score += 300; TXT_GREAT(300)
             } else {
                 if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, false); combo++; TXT_GREAT(calc_score(300, false)) }
@@ -126,6 +140,8 @@ void Level::btn(double t, uint8_t button) {
             if(obj.type & 2) {
                 // drumroll
                 score += (obj.sound & 4) ? 600 : 300; TXT_GREAT((obj.sound & 4) ? 600 : 300)
+            } else if(obj.type & 8) {
+                score += 300; TXT_GREAT(300)
             } else {
                 if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, true); combo++; TXT_GREAT(calc_score(300, true)) }
                 else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, true); combo++; TXT_OK(calc_score(100, true)) }
@@ -147,7 +163,7 @@ void Level::btn(double t, uint8_t button) {
         double diff = abs(obj.time - t);
         bool kat = (obj.sound & 2) || (obj.sound & 8);
         bool big = obj.sound & 4;
-        if(!is_miss(diff) && !(obj.type & 2)) {
+        if(!is_miss(diff) && !(obj.type & 2) && !(obj.type & 8)) {
             if(obj.time < t) {
                 bool flag = false;
                 for(auto x : miss_idx)
@@ -167,10 +183,11 @@ void Level::btn(double t, uint8_t button) {
             }
             continue;
         }
-        if(!(obj.type & 2) && kat && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT)) continue;
-        if(!(obj.type & 2) && !kat && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) continue;
+        if(!(obj.type & 2) && !(obj.type & 8) && kat && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT)) continue;
+        if(!(obj.type & 2) && !(obj.type & 8) && !kat && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) continue;
         if((obj.type & 2) && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT) && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) continue;
-        if(obj.time < t && max_val < obj.time && (obj.type & 2)) {
+        if((obj.type & 8) && ((obj.denden == 2 && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT) && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) || (obj.denden == 1 && !check_input(button, INPUT_DON_LEFT) && !check_input(button, INPUT_DON_RIGHT)) || (obj.denden == 0 && !check_input(button, INPUT_KAT_LEFT) && !check_input(button, INPUT_KAT_RIGHT)))) continue; // gosh is this line long
+        if(obj.time < t && max_val < obj.time && ((obj.type & 2) || (obj.type & 8))) {
             max_idx = i - 1;
             max_val = obj.time;
             max_is_big = big;
@@ -190,7 +207,7 @@ void Level::btn(double t, uint8_t button) {
             }
         if(flag) continue;
 
-        if(diff < min_val && !(obj.type & 2)) { // delibirately ignore sliders
+        if(diff < min_val && !(obj.type & 2) && !(obj.type & 8)) { // delibirately ignore sliders and dendens
             min_idx = i - 1;
             min_val = diff;
             min_is_big = big;
@@ -200,9 +217,18 @@ void Level::btn(double t, uint8_t button) {
     if(min_idx == 0xffffffff) {
         if(max_idx == 0xffffffff) return;
         LevelHitObject& obj = hit_objects[max_idx];
-        int x = (obj.time - t) / lendiv + obj.len / 2 * lendiv;
-        if(x >= 0) {
-            if(max_is_big)
+        bool s = obj.type & 2
+            ? (obj.time - t) / lendiv + obj.len / 2 * lendiv >= 0
+            : t < obj.len + obj.time;
+        if(obj.type & 8) {
+            if(obj.denden == 2)
+                obj.denden = check_input(button, INPUT_DON_LEFT) || check_input(button, INPUT_DON_RIGHT)
+                    ? 0
+                    : 1;
+            else obj.denden ^= 1;
+        }
+        if(s) {
+            if(max_is_big && !(obj.type & 8))
                 cached.push_back((CachedDoubleHit) {
                     .t = t,
                     .i = max_idx,
