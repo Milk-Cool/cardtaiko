@@ -90,6 +90,7 @@ static String diffname(String filename) {
 
 static uint64_t game_start = 0;
 static uint8_t menu_state = 0;
+static bool use_diffname = false;
 #define MENU_MAIN 0
 #define MENU_LEVEL 1
 #define MENU_DIFF 2
@@ -132,11 +133,13 @@ static void menu_diff() {
     menu_options.clear();
     menu_idx = 0;
 
+    use_diffname = true;
+
     esd();
     maps_init();
     auto diffs = difficulty_list(level_path);
     for(auto diff : diffs)
-        menu_options.push_back(diffname(filename(diff)));
+        menu_options.push_back(filename(diff));
     maps_deinit();
     etft();
 }
@@ -254,7 +257,7 @@ static void render_menu(uint8_t pressed) {
         sel_options.push_back(menu_options[i]);
     String o = "";
     for(int i = 0; i < sel_options.size(); i++)
-        o += (i == menu_idx - start ? "> " : "") + sel_options[i] + "\n";
+        o += (i == menu_idx - start ? "> " : "") + (use_diffname ? diffname(sel_options[i]) : sel_options[i]) + "\n";
     lv_label_set_text(menu, o.c_str());
 }
 static void loop_main(uint8_t pressed) {
@@ -279,6 +282,7 @@ static void loop_diff(uint8_t pressed) {
     render_menu(pressed);
 
     if(check_input(pressed, INPUT_DON_RIGHT)) {
+        use_diffname = false;
         String& sel = menu_options[menu_idx];
         esd();
         maps_init();
@@ -288,8 +292,10 @@ static void loop_diff(uint8_t pressed) {
         maps_deinit();
         etft();
         game_show();
-    } else if(check_input(pressed, INPUT_DON_LEFT))
+    } else if(check_input(pressed, INPUT_DON_LEFT)) {
+        use_diffname = false;
         menu_level();
+    }
 }
 static void loop_game(uint8_t pressed) {
     lvl.btn(millis() - game_start, pressed);
