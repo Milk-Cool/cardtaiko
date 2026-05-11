@@ -74,7 +74,7 @@ std::vector<LevelRenderObject> Level::render(double t) {
         int maxx = obj.type & 8
             ? (obj.time + obj.len - t) / lendiv + 40
             : (obj.time - t) / lendiv + 40 + obj.len / 2 * lendiv;
-        if(maxx < -40 || minx > 360) continue;
+        if(maxx < -80 || minx > 400) continue;
         LevelRenderObject res = {
             .x = (obj.type & 8) ? (
                 obj.time > t
