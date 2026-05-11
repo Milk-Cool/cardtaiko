@@ -84,6 +84,9 @@ static String filename(String path) {
     if(idx == path.length() - 1) idx = path.substring(0, path.length() - 1).lastIndexOf('/');
     return path.substring(idx + 1);
 }
+static String diffname(String filename) {
+    return filename.substring(filename.indexOf('[') + 1, filename.indexOf(']'));
+}
 
 static uint64_t game_start = 0;
 static uint8_t menu_state = 0;
@@ -133,7 +136,7 @@ static void menu_diff() {
     maps_init();
     auto diffs = difficulty_list(level_path);
     for(auto diff : diffs)
-        menu_options.push_back(filename(diff));
+        menu_options.push_back(diffname(filename(diff)));
     maps_deinit();
     etft();
 }
@@ -245,9 +248,13 @@ static void render_menu(uint8_t pressed) {
         else menu_idx++;
     }
 
+    unsigned start = (menu_idx / 10) * 10;
+    std::vector<String> sel_options;
+    for(unsigned i = start; i < menu_options.size() && i < start + 10; i++)
+        sel_options.push_back(menu_options[i]);
     String o = "";
-    for(int i = 0; i < menu_options.size(); i++)
-        o += (i == menu_idx ? "> " : "") + menu_options[i] + "\n";
+    for(int i = 0; i < sel_options.size(); i++)
+        o += (i == menu_idx - start ? "> " : "") + sel_options[i] + "\n";
     lv_label_set_text(menu, o.c_str());
 }
 static void loop_main(uint8_t pressed) {
