@@ -168,13 +168,13 @@ void loop() {
     if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
     if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
     if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
-    lvl.btn(millis()  + 100000, pressed);
+    lvl.btn(millis(), pressed);
     last_mask = mask;
 
     for(auto x : past)
         lv_obj_del(x);
     past.clear();
-    auto cur = lvl.render(millis() + 100000);
+    auto cur = lvl.render(millis());
     for(auto x : cur) {
         int r = x.big ? 35 : 20;
         auto c = x.type & 8 ? LV_PALETTE_INDIGO : x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
@@ -191,7 +191,7 @@ void loop() {
         past.push_back(circle);
     }
     
-    auto rat = lvl.get_rating(millis() + 100000);
+    auto rat = lvl.get_rating(millis());
     lv_label_set_text(rating, rat.txt.c_str());
     lv_label_set_text(delta, rat.delta.c_str());
     lv_obj_set_style_text_opa(rating, rat.opacity * 255, 0);
