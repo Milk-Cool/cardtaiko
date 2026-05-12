@@ -49,7 +49,7 @@ Level::Level(String txt) {
         i++;
         sum += min(i / 10, 10);
     }
-    combo_bonus = 1000000.0 / sum;
+    combo_bonus = max((1000000.0 - i * 300) / sum, 0);
 }
 std::vector<LevelRenderObject> Level::render(double t) {
     std::vector<LevelRenderObject> ret;
