@@ -5,6 +5,10 @@
 #include <lvgl.h>
 #include "maps.h"
 #include "input.h"
+#include <PWMAudio.h>
+#include <BackgroundAudio.h>
+#include "en.h"
+#include "audio.h"
 
 #define W 320
 #define H 170
@@ -14,14 +18,8 @@ static lv_color_t buf[2][W * 10]; // what.
 
 static bool simple_rendering = false;
 
-void etft() {
-    digitalWrite(13, LOW);
-    digitalWrite(5, HIGH);
-}
-void esd() {
-    digitalWrite(13, HIGH);
-    digitalWrite(5, LOW);
-}
+static PWMAudio pwm(0);
+BackgroundAudioMP3 mp3(pwm);
 
 class LGFX : public lgfx::LGFX_Device {
     lgfx::Panel_ST7789 _panel_instance;
@@ -162,11 +160,13 @@ static void game_show() {
     lv_obj_set_style_opa(menu, LV_OPA_0, 0);
 }
 void setup() {
+    pinMode(0, OUTPUT);
     Serial.begin(115200);
     delay(1000);
     Serial.println("init");
 
     init_input();
+    mp3.begin();
 
     etft();
     tft.init();
@@ -287,6 +287,7 @@ static void loop_diff(uint8_t pressed) {
         esd();
         maps_init();
         lvl = load_level(level_path + "/" + sel);
+        audio_play(level_path + "/", mp3);
         game_start = millis();
         menu_state = MENU_GAME;
         maps_deinit();
@@ -350,4 +351,6 @@ void loop() {
 
     lv_refr_now(lv_disp_get_default());
     lv_timer_handler();
+    
+    audio_loop();
 }
