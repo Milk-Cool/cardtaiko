@@ -12,7 +12,6 @@ void init_input() {
 }
 uint8_t get_input() {
     for(int i = 0; i < 4; i++) touch[i].update();
-    for(int i = 0; i < 4; i++) Serial.printf("p%d %d\n", i, touch[i].touched());
 
     uint8_t mask = 0;
     if(touch[0].touched()) mask |= 1 << INPUT_KAT_RIGHT;
