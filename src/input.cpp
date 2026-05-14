@@ -1,18 +1,24 @@
 #include "input.h"
 #include <Arduino.h>
+#include <TouchyTouch.h>
 
+TouchyTouch touch[4];
 void init_input() {
-    pinMode(1, INPUT_PULLUP);
-    pinMode(2, INPUT_PULLUP);
-    pinMode(3, INPUT_PULLUP);
-    pinMode(4, INPUT_PULLUP);
+    for(int i = 0; i < 4; i++) {
+        // pins 1-4
+        touch[i].begin(i + 1);
+        // touch[i].threshold += 100; // from example code
+    }
 }
 uint8_t get_input() {
+    for(int i = 0; i < 4; i++) touch[i].update();
+    for(int i = 0; i < 4; i++) Serial.printf("p%d %d\n", i, touch[i].touched());
+
     uint8_t mask = 0;
-    if(!digitalRead(1)) mask |= 1 << INPUT_KAT_RIGHT;
-    if(!digitalRead(2)) mask |= 1 << INPUT_DON_RIGHT;
-    if(!digitalRead(3)) mask |= 1 << INPUT_DON_LEFT;
-    if(!digitalRead(4)) mask |= 1 << INPUT_KAT_LEFT;
+    if(touch[0].touched()) mask |= 1 << INPUT_KAT_RIGHT;
+    if(touch[1].touched()) mask |= 1 << INPUT_DON_RIGHT;
+    if(touch[2].touched()) mask |= 1 << INPUT_DON_LEFT;
+    if(touch[3].touched()) mask |= 1 << INPUT_KAT_LEFT;
     if(BOOTSEL) mask |= 1 << INPUT_BOOTSEL;
     return mask;
 }
