@@ -7,6 +7,7 @@
 #include "input.h"
 #include "en.h"
 #include "audio.h"
+#include <RPi_Pico_TimerInterrupt.h>
 
 #define W 320
 #define H 170
@@ -154,6 +155,12 @@ static void game_show() {
     lv_obj_set_style_opa(circles[1], LV_OPA_100, 0);
     lv_obj_set_style_opa(menu, LV_OPA_0, 0);
 }
+static RPI_PICO_Timer timer(1);
+bool timer_handler(struct repeating_timer* t) {
+    audio_loop();
+    return true;
+}
+#define INTERRUPT_DELAY_MS 20L
 void setup() {
     // Serial.begin(115200); // no serial bc speaker
 
@@ -231,6 +238,8 @@ void setup() {
 
     menu_main();
     game_hide();
+
+    timer.attachInterruptInterval(INTERRUPT_DELAY_MS * 1000, timer_handler);
 }
 std::vector<lv_obj_t*> past;
 uint8_t last_mask = 0;
@@ -343,6 +352,4 @@ void loop() {
 
     lv_refr_now(lv_disp_get_default());
     lv_timer_handler();
-    
-    audio_loop();
 }

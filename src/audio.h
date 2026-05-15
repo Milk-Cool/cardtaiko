@@ -1,5 +1,5 @@
 #pragma once
-#include <BackgroundAudio.h>
+#include <Arduino.h>
 
 void audio_init();
 void audio_play(String diff_path);

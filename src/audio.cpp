@@ -2,48 +2,40 @@
 #include "en.h"
 #include <SDFS.h>
 #include <PWMAudio.h>
-#include <BackgroundAudio.h>
-#include "f.h"
+#include <AudioGeneratorMP3.h>
+#include <AudioFileSourceSD.h>
+#include <AudioOutputPWM.h>
+#include <stdlib.h>
 
 static String path;
-static size_t idx;
-static PWMAudio pwm(0);
-static BackgroundAudioMP3 mp3(pwm);
+static AudioFileSourceSD* src;
+static AudioGeneratorMP3* mp3;
+static AudioOutputPWM* pwm;
 static uint8_t filebuff[512];
 void audio_init() {
-    mp3.begin();
+    src = nullptr;
+    pwm = new AudioOutputPWM(44100, 0);
+    mp3 = nullptr;
     // mp3.setGain(0.2);
 }
 void audio_play(String diff_path) {
     path = diff_path.substring(0, diff_path.lastIndexOf('/')) + "/audio.mp3";
-    idx = 0;
     esd();
-    File f = SDFS.open(path, "r");
-    if(!f) {
-        etft();
-        path = "";
-        return;
+    if(src != nullptr) {
+        delete src;
     }
-    f.close();
+    src = new AudioFileSourceSD(path.c_str());
+    if(mp3 != nullptr) {
+        mp3->stop();
+        delete mp3;
+    }
+    mp3 = new AudioGeneratorMP3();
+    mp3->begin(src, pwm);
     etft();
 }
 void audio_loop() {
-    return;
-    while(mp3.availableForWrite() >= 512) {
-        if(12696 - idx < 512) return;
-        mp3.write(ww + idx, 512);
-        idx += 512;
-    }
-    return;
-    if(path == "") return;
+    if(!mp3->isRunning()) return;
     esd();
-    File f = SDFS.open(path, "r");
-    f.seek(idx);
-    while(f && mp3.availableForWrite() >= 512) {
-        int len = f.read(filebuff, 512);
-        mp3.write(filebuff, len);
-        idx += len;
-        if(len != 512) f.close();
-    }
+    if(!mp3->loop()) mp3->stop();
     etft();
 }
