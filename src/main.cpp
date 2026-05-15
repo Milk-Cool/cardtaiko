@@ -8,6 +8,7 @@
 #include "en.h"
 #include "audio.h"
 #include <RPi_Pico_TimerInterrupt.h>
+#include <NeoPixelConnect.h>
 
 #define W 320
 #define H 170
@@ -16,6 +17,8 @@ static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[2][W * 10]; // what.
 
 static bool simple_rendering = false;
+
+static NeoPixelConnect p(16, 1);
 
 class LGFX : public lgfx::LGFX_Device {
     lgfx::Panel_ST7789 _panel_instance;
@@ -156,11 +159,13 @@ static void game_show() {
     lv_obj_set_style_opa(menu, LV_OPA_0, 0);
 }
 static RPI_PICO_Timer timer(1);
+uint64_t millis_cnt = 0;
 bool timer_handler(struct repeating_timer* t) {
-    audio_loop();
+    millis_cnt++;
+    if(millis_cnt & 15 == 0) audio_loop();
     return true;
 }
-#define INTERRUPT_DELAY_MS 20L
+#define INTERRUPT_DELAY_MS 1L
 void setup() {
     // Serial.begin(115200); // no serial bc speaker
 
@@ -289,7 +294,7 @@ static void loop_diff(uint8_t pressed) {
         maps_init();
         lvl = load_level(level_path + "/" + sel);
         audio_play(level_path + "/");
-        game_start = millis();
+        game_start = millis_cnt;
         menu_state = MENU_GAME;
         maps_deinit();
         etft();
@@ -300,12 +305,12 @@ static void loop_diff(uint8_t pressed) {
     }
 }
 static void loop_game(uint8_t pressed) {
-    lvl.btn(millis() - game_start, pressed);
+    lvl.btn(millis_cnt - game_start, pressed);
 
     for(auto x : past)
         lv_obj_del(x);
     past.clear();
-    auto cur = lvl.render(millis() - game_start);
+    auto cur = lvl.render(millis_cnt - game_start);
     for(auto x : cur) {
         int r = x.big ? 35 : 20;
         auto c = x.type & 8 ? LV_PALETTE_INDIGO : x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
@@ -322,7 +327,7 @@ static void loop_game(uint8_t pressed) {
         past.push_back(circle);
     }
     
-    auto rat = lvl.get_rating(millis() - game_start);
+    auto rat = lvl.get_rating(millis_cnt - game_start);
     lv_label_set_text(rating, rat.txt.c_str());
     lv_label_set_text(delta, rat.delta.c_str());
     lv_obj_set_style_text_opa(rating, rat.opacity * 255, 0);
@@ -333,6 +338,14 @@ static void loop_game(uint8_t pressed) {
 }
 void loop() {
     uint8_t mask = get_input();
+    bool don = check_input(mask, INPUT_DON_LEFT) || check_input(mask, INPUT_DON_RIGHT);
+    bool kat = check_input(mask, INPUT_KAT_LEFT) || check_input(mask, INPUT_KAT_RIGHT);
+    // use 80 for dimmer led
+    if(don && kat) p.neoPixelSetValue(0, 80, 80, 0, true);
+    else if(kat) p.neoPixelSetValue(0, 0, 80, 80, true);
+    else if(don) p.neoPixelSetValue(0, 80, 0, 0, true);
+    else p.neoPixelSetValue(0, 0, 0, 0, true);
+
     uint8_t pressed = (mask ^ last_mask) & mask;
     // if(check_input(pressed, INPUT_DON_RIGHT)) Serial.println("DON_RIGHT");
     // if(check_input(pressed, INPUT_DON_LEFT)) Serial.println("DON_LEFT");
