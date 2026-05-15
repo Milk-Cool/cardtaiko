@@ -155,13 +155,10 @@ static void game_show() {
     lv_obj_set_style_opa(menu, LV_OPA_0, 0);
 }
 void setup() {
-    pinMode(0, OUTPUT);
-    Serial.begin(115200);
-    delay(1000);
-    Serial.println("init");
+    // Serial.begin(115200); // no serial bc speaker
 
-    init_input();
     audio_init();
+    init_input();
 
     etft();
     tft.init();
@@ -328,11 +325,11 @@ static void loop_game(uint8_t pressed) {
 void loop() {
     uint8_t mask = get_input();
     uint8_t pressed = (mask ^ last_mask) & mask;
-    if(check_input(pressed, INPUT_DON_RIGHT)) Serial.println("DON_RIGHT");
-    if(check_input(pressed, INPUT_DON_LEFT)) Serial.println("DON_LEFT");
-    if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
-    if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
-    if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
+    // if(check_input(pressed, INPUT_DON_RIGHT)) Serial.println("DON_RIGHT");
+    // if(check_input(pressed, INPUT_DON_LEFT)) Serial.println("DON_LEFT");
+    // if(check_input(pressed, INPUT_KAT_RIGHT)) Serial.println("KAT_RIGHT");
+    // if(check_input(pressed, INPUT_KAT_LEFT)) Serial.println("KAT_LEFT");
+    // if(check_input(pressed, INPUT_BOOTSEL)) Serial.println("BOOTSEL");
     last_mask = mask;
 
     if(menu_state == MENU_MAIN)
