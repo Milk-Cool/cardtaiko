@@ -5,6 +5,7 @@
 
 bool maps_init();
 void maps_deinit();
+bool maps_inpr();
 std::vector<String> maps_list();
 std::vector<String> difficulty_list(String path);
 Level load_level(String path);

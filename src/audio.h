@@ -3,4 +3,5 @@
 
 void audio_init();
 void audio_play(String diff_path);
-void audio_loop();
+int audio_loop();
+void audio_stop();

@@ -1,16 +1,22 @@
 #include "maps.h"
 #include <SDFS.h>
 
+static bool running = false;
 bool maps_init() {
-    SDFS.setConfig(SDFSConfig(5, SPI_EIGHTH_SPEED, SPI1));
+    SDFS.setConfig(SDFSConfig(5, 10000000, SPI1));
     bool ret = SDFS.begin();
     if(ret) {
         if(!SDFS.exists("/taiko")) SDFS.mkdir("/taiko");
+        running = true;
     }
     return ret;
 }
 void maps_deinit() {
     SDFS.end();
+    running = false;
+}
+bool maps_inpr() {
+    return running;
 }
 
 std::vector<String> maps_list() {

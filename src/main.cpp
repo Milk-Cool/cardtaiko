@@ -7,7 +7,6 @@
 #include "input.h"
 #include "en.h"
 #include "audio.h"
-#include <RPi_Pico_TimerInterrupt.h>
 #include <NeoPixelConnect.h>
 
 #define W 320
@@ -158,14 +157,6 @@ static void game_show() {
     lv_obj_set_style_opa(circles[1], LV_OPA_100, 0);
     lv_obj_set_style_opa(menu, LV_OPA_0, 0);
 }
-static RPI_PICO_Timer timer(1);
-uint64_t millis_cnt = 0;
-bool timer_handler(struct repeating_timer* t) {
-    millis_cnt++;
-    if(millis_cnt & 15 == 0) audio_loop();
-    return true;
-}
-#define INTERRUPT_DELAY_MS 1L
 void setup() {
     // Serial.begin(115200); // no serial bc speaker
 
@@ -243,8 +234,6 @@ void setup() {
 
     menu_main();
     game_hide();
-
-    timer.attachInterruptInterval(INTERRUPT_DELAY_MS * 1000, timer_handler);
 }
 std::vector<lv_obj_t*> past;
 uint8_t last_mask = 0;
@@ -293,11 +282,11 @@ static void loop_diff(uint8_t pressed) {
         esd();
         maps_init();
         lvl = load_level(level_path + "/" + sel);
-        audio_play(level_path + "/");
-        game_start = millis_cnt;
-        menu_state = MENU_GAME;
         maps_deinit();
         etft();
+        audio_play(level_path + "/");
+        game_start = millis();
+        menu_state = MENU_GAME;
         game_show();
     } else if(check_input(pressed, INPUT_DON_LEFT)) {
         use_diffname = false;
@@ -305,12 +294,12 @@ static void loop_diff(uint8_t pressed) {
     }
 }
 static void loop_game(uint8_t pressed) {
-    lvl.btn(millis_cnt - game_start, pressed);
+    lvl.btn(millis() - game_start, pressed);
 
     for(auto x : past)
         lv_obj_del(x);
     past.clear();
-    auto cur = lvl.render(millis_cnt - game_start);
+    auto cur = lvl.render(millis() - game_start);
     for(auto x : cur) {
         int r = x.big ? 35 : 20;
         auto c = x.type & 8 ? LV_PALETTE_INDIGO : x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
@@ -327,7 +316,7 @@ static void loop_game(uint8_t pressed) {
         past.push_back(circle);
     }
     
-    auto rat = lvl.get_rating(millis_cnt - game_start);
+    auto rat = lvl.get_rating(millis() - game_start);
     lv_label_set_text(rating, rat.txt.c_str());
     lv_label_set_text(delta, rat.delta.c_str());
     lv_obj_set_style_text_opa(rating, rat.opacity * 255, 0);
@@ -336,7 +325,10 @@ static void loop_game(uint8_t pressed) {
     lv_label_set_text(score, String(lvl.score).c_str());
     lv_label_set_text(combo, String(lvl.combo).c_str());
 }
+uint64_t last = 0;
 void loop() {
+    audio_loop();
+
     uint8_t mask = get_input();
     bool don = check_input(mask, INPUT_DON_LEFT) || check_input(mask, INPUT_DON_RIGHT);
     bool kat = check_input(mask, INPUT_KAT_LEFT) || check_input(mask, INPUT_KAT_RIGHT);
