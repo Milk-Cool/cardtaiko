@@ -34,18 +34,24 @@ typedef struct {
     String delta;
     float opacity;
 } Rating;
+typedef struct {
+    std::vector<LevelRenderObject> objs;
+    bool fin;
+} RenderReturn;
 class Level {
     public:
         Level(String txt);
-        std::vector<LevelRenderObject> render(double t);
+        RenderReturn render(double t);
         Rating get_rating(double t);
         int8_t overall_difficulty = 0;
         unsigned combo = 0;
+        unsigned maxcombo = 0;
         unsigned great = 0;
         unsigned ok = 0;
         unsigned miss = 0;
         unsigned score = 0;
         void btn(double t, uint8_t button);
+        void fin();
     private:
         std::vector<LevelHitObject> hit_objects;
         std::vector<uint16_t> hit_idx;

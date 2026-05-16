@@ -51,11 +51,18 @@ Level::Level(String txt) {
     }
     combo_bonus = max((1000000.0 - i * 300) / sum, 0);
 }
-std::vector<LevelRenderObject> Level::render(double t) {
+RenderReturn Level::render(double t) {
     std::vector<LevelRenderObject> ret;
     unsigned i = 0;
+    unsigned cnt = 0;
     for(auto obj : hit_objects) {
         i++;
+        // had to move it here bc of `continue;`
+        int minx = (obj.time - t) / lendiv + 40;
+        int maxx = obj.type & 8
+            ? (obj.time + obj.len - t) / lendiv + 40
+            : (obj.time - t) / lendiv + 40 + obj.len / 2 * lendiv;
+        if(maxx >= -80) cnt++;
         if(abs(obj.time - t) >= 2000 && !(obj.type & 8)) continue;
         bool flag = false;
         for(auto x : hit_idx)
@@ -70,10 +77,6 @@ std::vector<LevelRenderObject> Level::render(double t) {
             }
         if(flag) continue;
         
-        int minx = (obj.time - t) / lendiv + 40;
-        int maxx = obj.type & 8
-            ? (obj.time + obj.len - t) / lendiv + 40
-            : (obj.time - t) / lendiv + 40 + obj.len / 2 * lendiv;
         if(maxx < -80 || minx > 400) continue;
         LevelRenderObject res = {
             .x = (obj.type & 8) ? (
@@ -93,7 +96,7 @@ std::vector<LevelRenderObject> Level::render(double t) {
         ret.push_back(res);
     }
     std::reverse(ret.begin(), ret.end());
-    return ret;
+    return (RenderReturn) { .objs = ret, .fin = cnt == 0 };
 }
 Rating Level::get_rating(double t) {
     if(t - rating_time > 400) return (Rating) { .txt = "", .delta = "", .opacity = 0 };
@@ -114,6 +117,7 @@ unsigned Level::calc_score(unsigned base, bool big) {
 #define TXT_GREAT(s) { rating_txt = "GREAT"; rating_time = t; delta_txt = String(s); }
 #define TXT_OK(s) { rating_txt = "OK"; rating_time = t; delta_txt = String(s); }
 #define TXT_MISS { rating_txt = "MISS"; rating_time = t; delta_txt = ""; }
+#define MAXCOMBO { maxcombo = max(maxcombo, combo); }
 void Level::btn(double t, uint8_t button) {
     // if(!button) return;
 
@@ -123,8 +127,8 @@ void Level::btn(double t, uint8_t button) {
             if((obj.type & 2) || (obj.type & 8)) {
                 score += 300; TXT_GREAT(300)
             } else {
-                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, false); combo++; TXT_GREAT(calc_score(300, false)) }
-                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, false); combo++; TXT_OK(calc_score(100, false)) }
+                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, false); combo++; MAXCOMBO TXT_GREAT(calc_score(300, false)) }
+                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, false); combo++; MAXCOMBO TXT_OK(calc_score(100, false)) }
                 else { miss++; combo = 0; TXT_MISS }
                 hit_idx.push_back(cached[i].i);
             }
@@ -144,8 +148,8 @@ void Level::btn(double t, uint8_t button) {
             } else if(obj.type & 8) {
                 score += 300; TXT_GREAT(300)
             } else {
-                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, true); combo++; TXT_GREAT(calc_score(300, true)) }
-                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, true); combo++; TXT_OK(calc_score(100, true)) }
+                if(is_great(abs(cached[i].t - obj.time))) { great++; score += calc_score(300, true); combo++; MAXCOMBO TXT_GREAT(calc_score(300, true)) }
+                else if(is_ok(abs(cached[i].t - obj.time))) { ok++; score += calc_score(100, true); combo++; MAXCOMBO TXT_OK(calc_score(100, true)) }
                 else { miss++; combo = 0; TXT_MISS }
                 hit_idx.push_back(cached[i].i);
             }
@@ -266,8 +270,15 @@ void Level::btn(double t, uint8_t button) {
 
     // OD & timing windows
     // https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty
-    if(is_great(min_val)) { great++; score += calc_score(300, min_is_big); combo++; TXT_GREAT(calc_score(300, min_is_big)) }
-    else if(is_ok(min_val)) { ok++; score += calc_score(100, min_is_big); combo++; TXT_OK(calc_score(100, min_is_big)) }
+    if(is_great(min_val)) { great++; score += calc_score(300, min_is_big); combo++; MAXCOMBO TXT_GREAT(calc_score(300, min_is_big)) }
+    else if(is_ok(min_val)) { ok++; score += calc_score(100, min_is_big); combo++; MAXCOMBO TXT_OK(calc_score(100, min_is_big)) }
     else { miss++; combo = 0; TXT_MISS }
     hit_idx.push_back(min_idx);
+}
+void Level::fin() {
+    int total = 0;
+    for(LevelHitObject& obj : hit_objects)
+        if(!(obj.type & 8) && !(obj.type & 2))
+            total++;
+    miss += total - great - ok - miss;
 }

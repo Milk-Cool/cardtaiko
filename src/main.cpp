@@ -93,6 +93,7 @@ static bool use_diffname = false;
 #define MENU_DIFF 2
 #define MENU_GAME 3
 #define MENU_PAUSE 4
+#define MENU_RESULTS 5
 static std::vector<String> menu_options;
 static unsigned menu_idx;
 static String level_path;
@@ -171,6 +172,25 @@ static void menu_pause() {
     for(auto x : past)
         lv_obj_del(x);
     past.clear();
+}
+static void menu_results() {
+    menu_state = MENU_RESULTS;
+    menu_options.clear();
+    menu_idx = 0;
+
+    game_hide();
+    menu_options.push_back("GREAT: " + String(lvl.great));
+    menu_options.push_back("OK: " + String(lvl.ok));
+    menu_options.push_back("MISS: " + String(lvl.miss));
+    menu_options.push_back("COMBO: " + String(lvl.combo));
+    menu_options.push_back("MAX COMBO: " + String(lvl.maxcombo));
+    menu_options.push_back("exit");
+
+    for(auto x : past)
+        lv_obj_del(x);
+    past.clear();
+
+    audio_stop();
 }
 void setup() {
     // Serial.begin(115200); // no serial bc speaker
@@ -321,7 +341,12 @@ static void loop_game(uint8_t pressed) {
         lv_obj_del(x);
     past.clear();
     auto cur = lvl.render(millis() - game_start);
-    for(auto x : cur) {
+    if(cur.fin) {
+        lvl.fin();
+        menu_results();
+        return;
+    }
+    for(auto x : cur.objs) {
         int r = x.big ? 35 : 20;
         auto c = x.type & 8 ? LV_PALETTE_INDIGO : x.type & 2 ? LV_PALETTE_YELLOW : x.kat ? LV_PALETTE_CYAN : LV_PALETTE_RED;
 
@@ -362,6 +387,15 @@ static void loop_pause(uint8_t pressed) {
         }
     }
 }
+static void loop_results(uint8_t pressed) {
+    render_menu(pressed);
+
+    if(check_input(pressed, INPUT_DON_RIGHT)) {
+        String& sel = menu_options[menu_idx];
+        if(sel == "exit")
+            menu_main();
+    }
+}
 uint64_t last = 0;
 void loop() {
     if(menu_state == MENU_GAME) audio_loop();
@@ -393,6 +427,8 @@ void loop() {
         loop_game(pressed);
     else if(menu_state == MENU_PAUSE)
         loop_pause(pressed);
+    else if(menu_state == MENU_RESULTS)
+        loop_results(pressed);
 
     lv_refr_now(lv_disp_get_default());
     lv_timer_handler();
