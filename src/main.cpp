@@ -430,10 +430,10 @@ void loop() {
     uint8_t mask = get_input();
     bool don = check_input(mask, INPUT_DON_LEFT) || check_input(mask, INPUT_DON_RIGHT);
     bool kat = check_input(mask, INPUT_KAT_LEFT) || check_input(mask, INPUT_KAT_RIGHT);
-    // use 80 for dimmer led
-    if(don && kat) p.neoPixelSetValue(0, 80, 80, 0, true);
-    else if(kat) p.neoPixelSetValue(0, 0, 80, 80, true);
-    else if(don) p.neoPixelSetValue(0, 80, 0, 0, true);
+    // use 40 for dimmer led
+    if(don && kat) p.neoPixelSetValue(0, 40, 40, 0, true);
+    else if(kat) p.neoPixelSetValue(0, 0, 40, 40, true);
+    else if(don) p.neoPixelSetValue(0, 40, 0, 0, true);
     else p.neoPixelSetValue(0, 0, 0, 0, true);
 
     uint8_t pressed = (mask ^ last_mask) & mask;
