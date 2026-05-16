@@ -85,6 +85,7 @@ static String diffname(String filename) {
 }
 
 static uint64_t game_start = 0;
+static uint64_t pause_start;
 static uint8_t menu_state = 0;
 static bool use_diffname = false;
 #define MENU_MAIN 0
@@ -103,6 +104,7 @@ lv_obj_t* rating;
 lv_obj_t* delta;
 lv_obj_t* circles[2];
 lv_obj_t* menu;
+std::vector<lv_obj_t*> past;
 static void menu_main() {
     menu_state = MENU_MAIN;
     menu_options.clear();
@@ -156,6 +158,19 @@ static void game_show() {
     lv_obj_set_style_opa(circles[0], LV_OPA_100, 0);
     lv_obj_set_style_opa(circles[1], LV_OPA_100, 0);
     lv_obj_set_style_opa(menu, LV_OPA_0, 0);
+}
+static void menu_pause() {
+    menu_state = MENU_PAUSE;
+    menu_options.clear();
+    menu_idx = 0;
+
+    game_hide();
+    menu_options.push_back("resume");
+    menu_options.push_back("exit");
+
+    for(auto x : past)
+        lv_obj_del(x);
+    past.clear();
 }
 void setup() {
     // Serial.begin(115200); // no serial bc speaker
@@ -235,7 +250,6 @@ void setup() {
     menu_main();
     game_hide();
 }
-std::vector<lv_obj_t*> past;
 uint8_t last_mask = 0;
 static void render_menu(uint8_t pressed) {
     if(check_input(pressed, INPUT_KAT_LEFT)) {
@@ -294,6 +308,13 @@ static void loop_diff(uint8_t pressed) {
     }
 }
 static void loop_game(uint8_t pressed) {
+    if(check_input(pressed, INPUT_BOOTSEL)) {
+        pause_start = millis();
+        menu_pause();
+
+        return;
+    }
+
     lvl.btn(millis() - game_start, pressed);
 
     for(auto x : past)
@@ -325,9 +346,25 @@ static void loop_game(uint8_t pressed) {
     lv_label_set_text(score, String(lvl.score).c_str());
     lv_label_set_text(combo, String(lvl.combo).c_str());
 }
+static void loop_pause(uint8_t pressed) {
+    render_menu(pressed);
+
+    if(check_input(pressed, INPUT_DON_RIGHT)) {
+        String& sel = menu_options[menu_idx];
+        if(sel == "exit") {
+            audio_stop();
+            menu_main();
+        } else if(sel == "resume") {
+            game_show();
+            game_start += millis() - pause_start;
+            menu_state = MENU_GAME;
+            menu_options.clear();
+        }
+    }
+}
 uint64_t last = 0;
 void loop() {
-    audio_loop();
+    if(menu_state == MENU_GAME) audio_loop();
 
     uint8_t mask = get_input();
     bool don = check_input(mask, INPUT_DON_LEFT) || check_input(mask, INPUT_DON_RIGHT);
@@ -354,6 +391,8 @@ void loop() {
         loop_diff(pressed);
     else if(menu_state == MENU_GAME)
         loop_game(pressed);
+    else if(menu_state == MENU_PAUSE)
+        loop_pause(pressed);
 
     lv_refr_now(lv_disp_get_default());
     lv_timer_handler();

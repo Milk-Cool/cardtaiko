@@ -29,13 +29,13 @@ void audio_play(String diff_path) {
         delete src;
     }
     if(buf != nullptr) {
-        buf->close();
+        // buf->close();
         delete buf;
     }
     src = new AudioFileSourceSD(path.c_str());
     buf = new AudioFileSourceBuffer(src, BSIZE);
     if(mp3 != nullptr) {
-        mp3->stop();
+        // mp3->stop();
         delete mp3;
     }
     mp3 = new AudioGeneratorMP3();
@@ -53,6 +53,7 @@ int audio_loop() {
 }
 void audio_stop() {
     esd();
+    mp3->stop();
     SD.end();
     etft();
 }
