@@ -8,6 +8,7 @@
 #include "en.h"
 #include "audio.h"
 #include <NeoPixelConnect.h>
+#include <Keyboard.h>
 
 #define W 320
 #define H 170
@@ -94,6 +95,7 @@ static bool use_diffname = false;
 #define MENU_GAME 3
 #define MENU_PAUSE 4
 #define MENU_RESULTS 5
+#define MENU_KEYBOARD 6
 static std::vector<String> menu_options;
 static unsigned menu_idx;
 static String level_path;
@@ -112,6 +114,7 @@ static void menu_main() {
     menu_idx = 0;
 
     menu_options.push_back("play");
+    menu_options.push_back("keyboard");
     // TODO
 }
 static void menu_level() {
@@ -191,6 +194,13 @@ static void menu_results() {
     past.clear();
 
     audio_stop();
+}
+static void menu_keyboard() {
+    menu_state = MENU_KEYBOARD;
+    menu_options.clear();
+    menu_idx = 0;
+
+    Keyboard.begin();
 }
 void setup() {
     // Serial.begin(115200); // no serial bc speaker
@@ -295,6 +305,7 @@ static void loop_main(uint8_t pressed) {
     if(check_input(pressed, INPUT_DON_RIGHT)) {
         String& sel = menu_options[menu_idx];
         if(sel == "play") menu_level();
+        else if(sel == "keyboard") menu_keyboard();
     }
 }
 static void loop_level(uint8_t pressed) {
@@ -396,6 +407,22 @@ static void loop_results(uint8_t pressed) {
             menu_main();
     }
 }
+static void loop_keyboard(uint8_t held) {
+    render_menu(0);
+
+    if(check_input(held, INPUT_KAT_LEFT)) Keyboard.press('d');
+    else Keyboard.release('d');
+    if(check_input(held, INPUT_DON_LEFT)) Keyboard.press('f');
+    else Keyboard.release('f');
+    if(check_input(held, INPUT_DON_RIGHT)) Keyboard.press('j');
+    else Keyboard.release('j');
+    if(check_input(held, INPUT_KAT_RIGHT)) Keyboard.press('k');
+    else Keyboard.release('k');
+    if(check_input(held, INPUT_BOOTSEL)) {
+        Keyboard.end();
+        menu_main();
+    }
+}
 uint64_t last = 0;
 void loop() {
     if(menu_state == MENU_GAME) audio_loop();
@@ -429,6 +456,8 @@ void loop() {
         loop_pause(pressed);
     else if(menu_state == MENU_RESULTS)
         loop_results(pressed);
+    else if(menu_state == MENU_KEYBOARD)
+        loop_keyboard(mask);
 
     lv_refr_now(lv_disp_get_default());
     lv_timer_handler();
