@@ -190,6 +190,7 @@ static void menu_results() {
     menu_options.push_back("MISS: " + String(lvl.miss));
     menu_options.push_back("COMBO: " + String(lvl.combo));
     menu_options.push_back("MAX COMBO: " + String(lvl.maxcombo));
+    menu_options.push_back("SCORE: " + String(lvl.score));
     menu_options.push_back("exit");
 
     for(auto x : past)
