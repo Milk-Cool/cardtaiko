@@ -7,7 +7,8 @@ void init_input() {
     for(int i = 0; i < 4; i++) {
         // pins 1-4
         touch[i].begin(i + 1);
-        touch[i].threshold *= 1.0655;
+        touch[i].threshold *= 1.11;
+        // touch[i].threshold *= 1.0655;
     }
 }
 uint8_t get_input() {
