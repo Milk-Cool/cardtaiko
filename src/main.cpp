@@ -108,6 +108,9 @@ lv_obj_t* delta;
 lv_obj_t* circles[2];
 lv_obj_t* menu;
 std::vector<lv_obj_t*> past;
+
+static bool recalibrated = false;
+
 static void menu_main() {
     menu_state = MENU_MAIN;
     menu_options.clear();
@@ -330,8 +333,9 @@ static void loop_diff(uint8_t pressed) {
         maps_deinit();
         etft();
         audio_play(level_path + "/");
-        game_start = millis();
+        game_start = 0;
         menu_state = MENU_GAME;
+        recalibrated = false;
         game_show();
     } else if(check_input(pressed, INPUT_DON_LEFT)) {
         use_diffname = false;
@@ -339,6 +343,11 @@ static void loop_diff(uint8_t pressed) {
     }
 }
 static void loop_game(uint8_t pressed) {
+    if(!recalibrated && millis() - game_start >= 150) {
+        recalibrated = true;
+        recalibrate_input();
+    }
+
     if(check_input(pressed, INPUT_BOOTSEL)) {
         pause_start = millis();
         menu_pause();
@@ -403,8 +412,10 @@ static void loop_results(uint8_t pressed) {
 
     if(check_input(pressed, INPUT_DON_RIGHT)) {
         String& sel = menu_options[menu_idx];
-        if(sel == "exit")
+        if(sel == "exit") {
+            recalibrate_input();
             menu_main();
+        }
     }
 }
 static void loop_keyboard(uint8_t held) {
@@ -425,7 +436,10 @@ static void loop_keyboard(uint8_t held) {
 }
 uint64_t last = 0;
 void loop() {
-    if(menu_state == MENU_GAME) audio_loop();
+    if(menu_state == MENU_GAME) {
+        audio_loop();
+        if(game_start == 0) game_start = millis();
+    }
 
     uint8_t mask = get_input();
     bool don = check_input(mask, INPUT_DON_LEFT) || check_input(mask, INPUT_DON_RIGHT);

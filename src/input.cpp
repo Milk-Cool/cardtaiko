@@ -2,13 +2,21 @@
 #include <Arduino.h>
 #include <TouchyTouch.h>
 
+#define MULT 1.014
+
 TouchyTouch touch[4];
 void init_input() {
     for(int i = 0; i < 4; i++) {
         // pins 1-4
         touch[i].begin(i + 1);
-        touch[i].threshold *= 1.11;
+        touch[i].threshold *= MULT;
         // touch[i].threshold *= 1.0655;
+    }
+}
+void recalibrate_input() {
+    for(int i = 0; i < 4; i++) {
+        touch[i].recalibrate();
+        touch[i].threshold *= MULT;
     }
 }
 uint8_t get_input() {

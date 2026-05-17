@@ -10,3 +10,4 @@
 void init_input();
 uint8_t get_input();
 bool check_input(uint8_t mask, uint8_t bit);
+void recalibrate_input();

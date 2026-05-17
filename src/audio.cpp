@@ -8,7 +8,7 @@
 #include <AudioOutputPWM.h>
 #include <stdlib.h>
 
-#define BSIZE 32768
+#define BSIZE 65536
 static String path;
 static AudioFileSourceSD* src;
 static AudioFileSourceBuffer* buf;
