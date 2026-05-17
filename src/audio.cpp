@@ -40,7 +40,7 @@ void audio_play(String diff_path) {
     }
     mp3 = new AudioGeneratorMP3();
     mp3->begin(buf, pwm);
-    pwm->SetGain(0.3);
+    pwm->SetGain(0.5);
     etft();
 }
 int audio_loop() {
