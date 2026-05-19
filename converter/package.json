@@ -1,0 +1,22 @@
+{
+  "name": "cardtaiko-converter",
+  "version": "0.1.0",
+  "description": "a converter from osz files to a format readable by card::taiko",
+  "license": "MIT",
+  "author": "Milk_Cool",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.13"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "@zip.js/zip.js": "^2.8.26"
+  }
+}
