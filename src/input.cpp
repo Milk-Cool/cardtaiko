@@ -3,7 +3,7 @@
 #include <TouchyTouch.h>
 
 #define MULT 1.035
-#define ADD 0
+#define ADD 50
 
 TouchyTouch touch[4];
 void init_input() {

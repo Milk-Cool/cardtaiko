@@ -344,6 +344,8 @@ static void loop_diff(uint8_t pressed) {
     }
 }
 static void loop_game(uint8_t pressed) {
+    if(millis() < game_start) return;
+    
     if(!recalibrated && millis() - game_start >= 150) {
         recalibrated = true;
         recalibrate_input();
@@ -439,7 +441,7 @@ uint64_t last = 0;
 void loop() {
     if(menu_state == MENU_GAME) {
         audio_loop();
-        if(game_start == 0) game_start = millis();
+        if(game_start == 0) game_start = millis() + 50; // compensate for the audio offset
     }
 
     uint8_t mask = get_input();
