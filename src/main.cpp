@@ -442,7 +442,7 @@ uint64_t last = 0;
 void loop() {
     if(menu_state == MENU_GAME) {
         audio_loop();
-        if(game_start == 0) game_start = millis() + 50; // compensate for the audio offset
+        if(game_start == 0) game_start = millis() + 10; // compensate for the audio offset
     }
 
     uint8_t mask = get_input();
