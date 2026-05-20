@@ -345,7 +345,7 @@ static void loop_diff(uint8_t pressed) {
 }
 static void loop_game(uint8_t pressed) {
     if(millis() < game_start) return;
-    
+
     if(!recalibrated && millis() - game_start >= 150) {
         recalibrated = true;
         recalibrate_input();
@@ -416,6 +416,7 @@ static void loop_results(uint8_t pressed) {
     if(check_input(pressed, INPUT_DON_RIGHT)) {
         String& sel = menu_options[menu_idx];
         if(sel == "exit") {
+            delay(150); // lazy fix
             recalibrate_input();
             menu_main();
         }
