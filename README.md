@@ -9,6 +9,8 @@ this is an RP2040-Zero based device that is made for simulating osu!taiko as clo
 ## how do i use it?
 you'll have to build one yourself!! you can see `bom.xml` for the list of parts, and all the PCBs and modelsn as well as the firmware can also be found in this repository. then, you can convert and upload songs to an sd card using the [online tool](https://milk-cool.github.io/cardtaiko/). you have to put the songs in `/taiko` on the SD card. then, boot up the device, select your song and have fun!! (you can pause at any time by pressing BOOTSEL on the board.)
 
+for navigation, you can use the outer buttons to switch between options, the inner left one to go back and the inner right one to select.
+
 ### building it
 there are a few unmarked headers on the pcb. the one closest to the RP2040-Zero is where the display goes, the one in the upper left corner is for the SD card reader, and the four small ones all around the bottom part are where the 1x1 headers go in for the capacitive touch board. speaking of which, you also have to solder in 4 1MOhm resistors near the pins so that capactive touch works.
 
