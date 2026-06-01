@@ -1,0 +1,105 @@
+(footprint "Don Left"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 0 -0.5 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "ce649539-f085-4167-8a15-fb3fbed551e3")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "Don Left"
+		(at 0 1 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "13d93b0c-c1dd-4ad8-9f38-e2dc7f71df11")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "8983593f-3214-4613-9ffc-27e01f0f5a14")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "ba27cb81-72da-4e18-98a8-d6ac146777a2")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_text user "${REFERENCE}"
+		(at 0 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "8afc9b4c-725f-4163-89e8-1bbe46776e0f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" smd custom
+		(at 0 0)
+		(size 2.54 2.54)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(thermal_bridge_angle 90)
+		(options
+			(clearance outline)
+			(anchor circle)
+		)
+		(primitives
+			(gr_poly
+				(pts
+					(xy -0.5 -16) (xy 4.5 -16) (xy 4.5 0.5) (xy -0.5 0.5)
+				)
+				(width 2)
+				(fill yes)
+			)
+			(gr_arc
+				(start -17 0.5)
+				(mid -12.167262 -11.167262)
+				(end -0.5 -16)
+				(width 2)
+			)
+			(gr_poly
+				(pts
+					(xy -17 0.5) (xy -6 0.5) (xy -6 -4.5) (xy -0.5 -4.5) (xy -0.589299 -16.022558) (xy -3.5 -15.5)
+					(xy -12.5 -10.5)
+				)
+				(width 2)
+				(fill yes)
+			)
+		)
+		(uuid "332c56e8-d373-4eb9-aa6d-4e93d260fa25")
+	)
+	(embedded_fonts no)
+)

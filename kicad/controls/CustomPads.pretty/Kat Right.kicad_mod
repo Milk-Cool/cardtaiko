@@ -1,0 +1,103 @@
+(footprint "Kat Right"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 0 -0.5 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "243ad52e-ce38-48a8-a402-c6864fd43d50")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "Kat Right"
+		(at 0 1 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "6f4c1545-c9cb-4061-9511-284d3f5a8976")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9105f10b-67ef-4a8c-8462-0903b7176161")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "250e76e5-1d22-4124-a5fd-9e134c48927f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_arc
+		(start -13 -18.993588)
+		(mid -1.436406 -15.067836)
+		(end 5.347069 -4.913393)
+		(stroke
+			(width 2)
+			(type default)
+		)
+		(layer "F.Cu")
+		(uuid "1d93e702-9996-46ed-849d-e43142786fee")
+	)
+	(fp_poly
+		(pts
+			(xy 5.347069 -4.913393) (xy 16.5 -4.913393) (xy 16.5 -19) (xy -12.993588 -19) (xy -13 -18.993588)
+			(xy -5 -18.993588) (xy -1.436406 -15.429994) (xy -1.436406 -15.936407) (xy 4.500001 -10) (xy 4.5 -10)
+			(xy 5.347069 -9.152931)
+		)
+		(stroke
+			(width 2)
+			(type solid)
+		)
+		(fill yes)
+		(layer "F.Cu")
+		(uuid "0fb9ef32-29ef-41ac-8ec7-87e983e8a686")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "8afc9b4c-725f-4163-89e8-1bbe46776e0f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" smd circle
+		(at 8 -13.5)
+		(size 2.54 2.54)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(thermal_bridge_angle 90)
+		(uuid "332c56e8-d373-4eb9-aa6d-4e93d260fa25")
+	)
+	(embedded_fonts no)
+)
